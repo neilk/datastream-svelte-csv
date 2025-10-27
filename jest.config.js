@@ -15,8 +15,8 @@ export default {
 		],
 		'^.+\\.ts$': 'ts-jest'
 	},
-	testMatch: ['**/src/**/*.test.ts'],
-	testPathIgnorePatterns: ['/node_modules/', '/tests/'],
+	testMatch: ['**/tests/unit/**/*.test.ts'],
+	testPathIgnorePatterns: ['/node_modules/'],
 	collectCoverageFrom: ['src/**/*.{ts,svelte}', '!src/**/*.d.ts'],
 	setupFilesAfterEnv: ['<rootDir>/jest.setup.js']
 };
