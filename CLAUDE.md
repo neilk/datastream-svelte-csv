@@ -55,7 +55,7 @@ The task description is located in [TASK.md](./TASK.md).
 - When we reject a CSV file, or encounter an error, we throw an except which should bubble up to Svelte and display it in a dedicated area for errors, which has a red tint when displayed.
 - Expect CSV files to always have a header line which names the columns. Reject the file if it does not.
 - We will use the battle-tested `csv-parse` npm library and package it up for the client-side. We will never manipulate lines of the CSV directly.
-  - For our first implementation we will simply ingest the entire file from an HTML File Input, though we should leave the door open for streaming and parsing.
+  - In particular, we want to use csv-parse's streaming parsing, because we will be ingesting files that are many megabytes in size.
 - Strictness of parsing
   - We reject CSV files which do not have the following columns, case-insensitively. In our app's ingested data we will normalize the column names.
     - “ResultValue”

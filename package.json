@@ -18,7 +18,8 @@
 		"test:integration": "playwright test",
 		"test": "npm run test:unit && npm run test:integration",
 		"test:ci": "npm run test:unit && npm run test:integration",
-		"prepare": "husky"
+		"prepare": "husky",
+		"parse": "node --loader ts-node/esm scripts/parse.ts"
 	},
 	"lint-staged": {
 		"*.{js,ts,svelte,css,md,json}": "prettier --write"
@@ -32,6 +33,7 @@
 		"@testing-library/jest-dom": "^6.9.1",
 		"@testing-library/svelte": "^5.2.8",
 		"@types/jest": "^30.0.0",
+		"@types/node": "^24.9.1",
 		"http-server": "^14.1.1",
 		"husky": "^9.1.7",
 		"jest": "^30.2.0",
@@ -44,6 +46,7 @@
 		"svelte-check": "^4.3.3",
 		"svelte-jester": "^5.0.0",
 		"ts-jest": "^29.4.5",
+		"ts-node": "^10.9.2",
 		"tslib": "^2.8.1",
 		"typescript": "^5.9.3",
 		"vite": "^7.1.12"
