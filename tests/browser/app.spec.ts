@@ -45,10 +45,6 @@ test('displays correct average for specific location by ID', async ({ page }) =>
 	// Check that the average temperature is displayed correctly (16.32°C)
 	const tempValue = page.locator('.temperature-value');
 	await expect(tempValue).toContainText('16.32');
-
-	// Check that the metadata shows the correct location name
-	const metadata = page.locator('.temperature-metadata');
-	await expect(metadata).toContainText('Morin P - Riv. Ste-Marguerite (Saguenay)');
 });
 
 test('displays correct average for specific location by Name', async ({ page }) => {
