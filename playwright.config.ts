@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Turned off parallelism because it seemed to make it more reliable.
 export default defineConfig({
 	testDir: './tests/browser',
 	fullyParallel: false,
