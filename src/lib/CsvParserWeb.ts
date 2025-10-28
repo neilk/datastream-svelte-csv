@@ -1,5 +1,5 @@
 import { parse } from 'csv-parse/browser/esm';
-import { type ParseResults, getParser } from './CsvParserCommon.js';
+import { type ParseResults, getParser } from './CsvParser.js';
 
 /**
  * Parses CSV data from a Web ReadableStream (browser-compatible).

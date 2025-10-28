@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from '@jest/globals';
-import type { ParseResults } from '../../src/lib/CsvParserCommon';
+import type { ParseResults } from '../../src/lib/CsvParser';
 import { parseCsv } from '../../src/lib/CsvParserCli';
 import { resolve } from 'path';
 
