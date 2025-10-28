@@ -113,48 +113,44 @@
 
 	{#if parseResults && !isProcessing}
 		<div class="results-section">
-			<div class="location-selector">
-				<label for="monitoring-location-select">
-					<strong>Monitoring Location:</strong>
-				</label>
-
-				<div class="display-mode-selector">
-					<label>
-						<input type="radio" name="display-mode" value="name" bind:group={displayMode} />
-						By Name
+			<div class="results-content">
+				<div class="location-selector">
+					<label for="monitoring-location-select">
+						<strong>Monitoring Location:</strong>
 					</label>
-					<label>
-						<input type="radio" name="display-mode" value="id" bind:group={displayMode} />
-						By ID
-					</label>
-				</div>
 
-				<select
-					id="monitoring-location-select"
-					value={selectedLocationId}
-					onchange={handleLocationChange}
-				>
-					<option value="-ALL-">All Locations (Average)</option>
-					{#each sortedLocations as [id, name]}
-						<option value={id}>{displayMode === 'id' ? id : name}</option>
-					{/each}
-				</select>
-			</div>
-
-			{#if currentResult}
-				<div class="temperature-display">
-					<h2>Average Water Temperature</h2>
-					<div class="temperature-value">
-						{currentResult.average.toFixed(2)}°C
+					<div class="display-mode-selector">
+						<label>
+							<input type="radio" name="display-mode" value="name" bind:group={displayMode} />
+							By Name
+						</label>
+						<label>
+							<input type="radio" name="display-mode" value="id" bind:group={displayMode} />
+							By ID
+						</label>
 					</div>
-					<p class="temperature-metadata">
-						Based on {currentResult.count} measurements
-						{#if selectedLocationId !== '-ALL-'}
-							at {monitoringLocations.get(selectedLocationId)}
-						{/if}
-					</p>
+
+					<select
+						id="monitoring-location-select"
+						value={selectedLocationId}
+						onchange={handleLocationChange}
+					>
+						<option value="-ALL-">All Locations (Average)</option>
+						{#each sortedLocations as [id, name]}
+							<option value={id}>{displayMode === 'id' ? id : name}</option>
+						{/each}
+					</select>
 				</div>
-			{/if}
+
+				{#if currentResult}
+					<div class="temperature-display">
+						<h2>Average Water Temperature</h2>
+						<div class="temperature-value">
+							{currentResult.average.toFixed(2)}°C
+						</div>
+					</div>
+				{/if}
+			</div>
 		</div>
 	{/if}
 </div>
@@ -237,8 +233,14 @@
 		margin: 2rem 0;
 	}
 
+	.results-content {
+		display: flex;
+		gap: 2rem;
+		align-items: flex-start;
+	}
+
 	.location-selector {
-		margin: 1.5rem 0;
+		flex: 1;
 		padding: 1rem;
 		background-color: #f5f5f5;
 		border-radius: 8px;
@@ -281,7 +283,7 @@
 	}
 
 	.temperature-display {
-		margin: 2rem 0;
+		flex: 1;
 		padding: 2rem;
 		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 		border-radius: 12px;
