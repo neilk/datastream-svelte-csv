@@ -64,7 +64,7 @@ function normalizeHeaders(headers: string[]): string[] {
  * @param filePath - Path to the CSV file to parse
  * @returns Parse results containing monitoring locations and their statistics
  */
-export async function parseCSV(filePath: string): Promise<ParseResults> {
+export async function parseCsv(filePath: string): Promise<ParseResults> {
 	let headersValidated = false;
 
 	const parser = parse({

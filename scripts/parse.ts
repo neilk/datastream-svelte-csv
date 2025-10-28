@@ -1,10 +1,10 @@
 #!/usr/bin/env ts-node
 
-import { parseCSV } from '../src/lib/CsvParserNode.js';
+import { parseCsv } from '../src/lib/CsvParserNode.js';
 
 async function main(filePath: string): Promise<void> {
 	console.log(`Parsing CSV file: ${filePath}\n`);
-	const results = await parseCSV(filePath);
+	const results = await parseCsv(filePath);
 
 	console.log('=== Monitoring Locations ===');
 	console.log(`Found ${results.monitoringLocations.size} monitoring locations:\n`);

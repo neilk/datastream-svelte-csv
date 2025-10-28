@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from '@jest/globals';
 import type { ParseResults } from '../../src/lib/CsvParser';
-import { parseCSV } from '../../src/lib/CsvParserNode';
+import { parseCsv } from '../../src/lib/CsvParserNode';
 import { resolve } from 'path';
 
 describe('CSV Parser', () => {
@@ -8,7 +8,7 @@ describe('CSV Parser', () => {
 
 	beforeAll(async function () {
 		const sampleCsvPath = resolve(__dirname, '../data/sample.csv');
-		results = await parseCSV(sampleCsvPath);
+		results = await parseCsv(sampleCsvPath);
 	});
 
 	it('should calculate correct average for all locations (-ALL-)', () => {
