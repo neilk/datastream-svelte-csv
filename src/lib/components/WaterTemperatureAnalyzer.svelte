@@ -133,6 +133,18 @@
 		const target = event.target as HTMLSelectElement;
 		selectedLocationId = target.value;
 	}
+
+	/**
+	 * Format file size for display
+	 */
+	function formatFileSize(bytes: number): string {
+		const kb = bytes / 1024;
+		if (kb < 1024) {
+			return `${kb.toFixed(1)} KB`;
+		}
+		const mb = kb / 1024;
+		return `${mb.toFixed(2)} MB`;
+	}
 </script>
 
 <div class="water-temp-analyzer">
@@ -175,6 +187,9 @@
 	{#if isProcessing}
 		<div class="processing-message">
 			<p>Processing file: <strong>{selectedFile?.name}</strong></p>
+			{#if selectedFile}
+				<p class="file-size">Size: {formatFileSize(selectedFile.size)}</p>
+			{/if}
 			<p>Please wait...</p>
 		</div>
 	{/if}
@@ -323,6 +338,11 @@
 	.processing-message p {
 		margin: 0.25rem 0;
 		color: #1565c0;
+	}
+
+	.file-size {
+		font-size: 0.9rem;
+		color: #1976d2;
 	}
 
 	.results-section {
