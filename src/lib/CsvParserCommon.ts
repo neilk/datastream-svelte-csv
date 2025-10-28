@@ -1,3 +1,4 @@
+import type { Parser } from 'csv-parse';
 import type { LocationResult, Record } from './RecordDataAccumulator.js';
 import { RecordDataAccumulator } from './RecordDataAccumulator.js';
 
@@ -54,7 +55,7 @@ export function getParser(
 	errorCallback: (error: Error) => void,
 	endCallback: (parseResults: ParseResults) => void,
 	accumulator: RecordDataAccumulator = new RecordDataAccumulator()
-) {
+): Parser {
 	const parser = parse({
 		columns: (headers: string[]) => {
 			// Validate headers on first row
@@ -82,4 +83,6 @@ export function getParser(
 		};
 		endCallback(results);
 	});
+
+	return parser;
 }

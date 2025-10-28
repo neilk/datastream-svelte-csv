@@ -17,7 +17,7 @@ import { type ParseResults, getParser } from './CsvParserCommon.js';
  */
 export async function parseCsv(filePath: string): Promise<ParseResults> {
 	const stream = createReadStream(filePath);
-	const promise = new Promise<ParseResults>(async (resolve, reject) => {
+	return new Promise<ParseResults>(async (resolve, reject) => {
 		const errorCallback = (error: Error) => {
 			stream.destroy();
 			reject(error);
@@ -31,6 +31,4 @@ export async function parseCsv(filePath: string): Promise<ParseResults> {
 
 		await pipeline(stream, parser);
 	});
-
-	return promise;
 }

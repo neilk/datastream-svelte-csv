@@ -1,128 +1,39 @@
 import { parse } from 'csv-parse/browser/esm';
-import type { Record, LocationResult } from './RecordDataAccumulator.js';
-import { RecordDataAccumulator } from './RecordDataAccumulator.js';
-
-/**
- * Results from parsing a CSV file
- */
-export interface ParseResults {
-	monitoringLocations: Map<string, string>; // ID -> Name
-	monitoringLocationResults: Map<string, LocationResult>; // ID -> Result
-}
-
-/**
- * Required columns (in their canonical intercapped form)
- */
-const REQUIRED_COLUMNS = [
-	'ResultValue',
-	'CharacteristicName',
-	'MonitoringLocationID',
-	'MonitoringLocationName'
-];
-
-/**
- * Map of lowercase column names to their intercapped canonical form
- */
-const REQUIRED_COLUMN_NAME_MAP = new Map<string, string>(
-	REQUIRED_COLUMNS.map((val) => [val.toLowerCase(), val])
-);
-
-/**
- * Validates that required columns exist in the CSV header
- */
-function validateHeaders(headers: string[]): void {
-	const normalizedHeaders = headers.map((h) => h.toLowerCase());
-	for (const requiredLowercase of REQUIRED_COLUMN_NAME_MAP.keys()) {
-		if (!normalizedHeaders.includes(requiredLowercase)) {
-			const canonicalName = REQUIRED_COLUMN_NAME_MAP.get(requiredLowercase);
-			throw new Error(`Missing required column: ${canonicalName} (case-insensitive)`);
-		}
-	}
-}
-
-/**
- * Normalizes column headers to their canonical intercapped form
- */
-function normalizeHeaders(headers: string[]): string[] {
-	return headers.map((header) => {
-		const lowercase = header.toLowerCase();
-		return REQUIRED_COLUMN_NAME_MAP.get(lowercase) || header;
-	});
-}
+import { type ParseResults, getParser } from './CsvParserCommon.js';
 
 /**
  * Parses CSV data from a Web ReadableStream (browser-compatible).
  * Extracts averages of water temperature data by monitoring location.
  *
  * @param webStream - A Web ReadableStream containing CSV data (e.g., from File.stream())
- * @param accumulator - Optional RecordDataAccumulator instance to use for processing
  * @returns Parse results containing monitoring locations and their statistics
  */
-export async function parseCSVFromStream(
-	webStream: ReadableStream,
-	accumulator: RecordDataAccumulator = new RecordDataAccumulator()
-): Promise<ParseResults> {
-	let headersValidated = false;
-
-	const parser = parse({
-		columns: (headers) => {
-			// Validate headers on first row
-			validateHeaders(headers);
-			headersValidated = true;
-
-			// Normalize column names to intercapped form
-			return normalizeHeaders(headers);
-		},
-		skip_empty_lines: true,
-		trim: true
-	});
-
-	// Process each record as it is parsed
-	parser.on('readable', function () {
-		let record: Record;
-		while ((record = parser.read()) !== null) {
-			accumulator.add(record);
-		}
-	});
-
+export async function parseCSVFromStream(webStream: ReadableStream): Promise<ParseResults> {
 	// Create promises for completion and error handling
-	const parserPromise = new Promise<ParseResults>((resolve, reject) => {
-		parser.on('error', (error) => {
+	return new Promise<ParseResults>((resolve, reject) => {
+		const errorCallback = (error: Error) => {
 			reject(error);
-		});
+		};
 
-		parser.on('end', () => {
-			resolve({
-				monitoringLocations: accumulator.getLocations(),
-				monitoringLocationResults: accumulator.getLocationResults()
-			});
-		});
-	});
+		const endCallback = (results: ParseResults) => {
+			resolve(results);
+		};
 
-	try {
-		// Read from Web ReadableStream and write to parser
-		const reader = webStream.getReader();
+		const parser = getParser(parse, errorCallback, endCallback);
+
+		// Pipeline Web ReadableStream to parser
 		const decoder = new TextDecoder();
-
-		while (true) {
-			const { done, value } = await reader.read();
-
-			if (done) {
+		const writableStream = new WritableStream({
+			write(chunk) {
+				const text = decoder.decode(chunk, { stream: false });
+				parser.write(text);
+			},
+			close() {
 				parser.end();
-				break;
 			}
+		});
 
-			// Decode the chunk and write to parser
-			const chunk = decoder.decode(value, { stream: true });
-			parser.write(chunk);
-		}
-
-		// Wait for parsing to complete
-		return await parserPromise;
-	} catch (error) {
-		if (!headersValidated) {
-			throw new Error('CSV file must have a header line');
-		}
-		throw error;
-	}
+		// pipeTo returns a Promise - catch any streaming errors
+		webStream.pipeTo(writableStream).catch(reject);
+	});
 }
