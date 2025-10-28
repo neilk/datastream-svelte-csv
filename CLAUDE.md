@@ -52,7 +52,8 @@ The task description is located in [TASK.md](./TASK.md).
 
 ## Strategy
 
-- When we reject a CSV file, or encounter an error, we throw an except which should bubble up to Svelte and display it in a dedicated area for errors, which has a red tint when displayed.
+### Parsing logic
+
 - Expect CSV files to always have a header line which names the columns. Reject the file if it does not.
 - We will use the battle-tested `csv-parse` npm library and package it up for the client-side. We will never manipulate lines of the CSV directly.
   - In particular, we want to use csv-parse's streaming parsing, because we will be ingesting files that are many megabytes in size.
@@ -76,7 +77,10 @@ The task description is located in [TASK.md](./TASK.md).
       - Calculate the average and count of each entry in monitoringLocationData, and add it to monitoringLocationResults.
       - Calculate the average of all, using the average and count of each for a weighted average. and add that value with monitoringLocation = "-ALL-" to monitoringLocationResults.
       - Collect all values with “ResultValue” where “CharacteristicName" is equal to "Temperature, water”.
-- The app will display:
+
+### SvelteKit component
+
+- The SvelteKit component will display:
   - A file Input element
     - Upon entering a file into that Input element, ingestion starts immediately. This will replace any data we have previously ingested.
   - Average Water Temperature
