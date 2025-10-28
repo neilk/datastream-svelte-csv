@@ -8,7 +8,7 @@ import { type ParseResults, getParser } from './CsvParser.js';
  * @param webStream - A Web ReadableStream containing CSV data (e.g., from File.stream())
  * @returns Parse results containing monitoring locations and their statistics
  */
-export async function parseCSVFromStream(webStream: ReadableStream): Promise<ParseResults> {
+export async function parseCsv(webStream: ReadableStream): Promise<ParseResults> {
 	// Create promises for completion and error handling
 	return new Promise<ParseResults>((resolve, reject) => {
 		const errorCallback = (error: Error) => {

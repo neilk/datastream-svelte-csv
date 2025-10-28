@@ -8,7 +8,7 @@
 	 * Can be dropped into any Svelte application.
 	 */
 
-	import { parseCSVFromStream, type ParseResults } from '$lib/CsvParserWeb';
+	import { parseCsv, type ParseResults } from '$lib/CsvParserWeb';
 	import type { LocationResult } from '$lib/RecordDataAccumulator';
 
 	// Props for customization
@@ -66,7 +66,7 @@
 			const stream = file.stream();
 
 			// Parse the CSV file
-			const results = await parseCSVFromStream(stream);
+			const results = await parseCsv(stream);
 
 			// Update state with results
 			parseResults = results;
