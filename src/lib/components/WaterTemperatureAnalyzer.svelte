@@ -30,6 +30,14 @@
 	let monitoringLocations = $derived(
 		parseResults?.monitoringLocations || new Map<string, string>()
 	);
+	let sortedLocations = $derived.by(() => {
+		const entries = [...monitoringLocations.entries()];
+		return entries.sort((a, b) => {
+			const aLabel = displayMode === 'id' ? a[0] : a[1];
+			const bLabel = displayMode === 'id' ? b[0] : b[1];
+			return aLabel.localeCompare(bLabel);
+		});
+	});
 	let currentResult = $derived.by(() => {
 		if (!parseResults) return null;
 		return parseResults.monitoringLocationResults.get(selectedLocationId) || null;
@@ -127,7 +135,7 @@
 					onchange={handleLocationChange}
 				>
 					<option value="-ALL-">All Locations (Average)</option>
-					{#each [...monitoringLocations.entries()] as [id, name]}
+					{#each sortedLocations as [id, name]}
 						<option value={id}>{displayMode === 'id' ? id : name}</option>
 					{/each}
 				</select>
