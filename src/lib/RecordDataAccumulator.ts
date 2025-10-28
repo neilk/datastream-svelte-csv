@@ -1,5 +1,5 @@
 /**
- * Parsed CSV record (normalized to intercapped)
+ * Data record (normalized to intercapped)
  */
 export interface Record {
 	ResultValue: string;

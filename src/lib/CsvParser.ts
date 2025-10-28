@@ -53,7 +53,8 @@ function normalizeHeaders(headers: string[]): string[] {
 }
 
 /**
- * Parses a CSV file and extracts water temperature data by monitoring location
+ * Parses a CSV file as a stream.
+ * Extracts averages of water temperature data by monitoring location.
  */
 export async function parseCSV(filePath: string): Promise<ParseResults> {
 	// monitoring location id to name
@@ -74,7 +75,7 @@ export async function parseCSV(filePath: string): Promise<ParseResults> {
 		trim: true
 	});
 
-	// Process each record as it's parsed
+	// Process each record as it is parsed
 	const accumulator = new RecordDataAccumulator();
 	parser.on('readable', function () {
 		let record: Record;
