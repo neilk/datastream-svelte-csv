@@ -8,7 +8,7 @@
 	 * Can be dropped into any Svelte application.
 	 */
 
-	import { parseCSVFromStream, type ParseResults } from '$lib/CsvParser';
+	import { parseCSVFromStream, type ParseResults } from '$lib/CsvParserWeb';
 	import type { LocationResult } from '$lib/RecordDataAccumulator';
 
 	// Props for customization

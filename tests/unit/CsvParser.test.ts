@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from '@jest/globals';
-import type { ParseResults } from '../../src/lib/CsvParser';
-import { parseCsv } from '../../src/lib/CsvParserNode';
+import type { ParseResults } from '../../src/lib/CsvParserCommon';
+import { parseCsv } from '../../src/lib/CsvParserCli';
 import { resolve } from 'path';
 
 describe('CSV Parser', () => {

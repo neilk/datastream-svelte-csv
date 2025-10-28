@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { parseCsv } from '../src/lib/CsvParserNode.js';
+import { parseCsv } from '../src/lib/CsvParserCli.js';
 
 async function main(filePath: string): Promise<void> {
 	console.log(`Parsing CSV file: ${filePath}\n`);
