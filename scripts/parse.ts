@@ -28,7 +28,6 @@ async function main() {
 
 			console.log(`${locationName} (${locationId}):`);
 			console.log(`  Average: ${result.average.toFixed(2)}°C`);
-			console.log(`  Count: ${result.count} readings\n`);
 		}
 	} catch (error) {
 		if (error instanceof Error) {
