@@ -22,7 +22,7 @@ async function loadFile(page: Page) {
 }
 
 test('displays correct average for all locations', async ({ page }) => {
-	loadFile(page);
+	await loadFile(page);
 	// The default selection should be "-ALL-" (All Locations)
 	await expect(page.locator('#monitoring-location-select')).toHaveValue('-ALL-');
 
@@ -32,7 +32,7 @@ test('displays correct average for all locations', async ({ page }) => {
 });
 
 test('displays correct average for specific location by ID', async ({ page }) => {
-	loadFile(page);
+	await loadFile(page);
 
 	// Switch to "By ID" display mode
 	const byIdRadio = page.locator('input[type="radio"][value="id"]');
@@ -48,7 +48,7 @@ test('displays correct average for specific location by ID', async ({ page }) =>
 });
 
 test('displays correct average for specific location by Name', async ({ page }) => {
-	loadFile(page);
+	await loadFile(page);
 
 	// Default is "By Name", so select location by name
 	const locationSelect = page.locator('#monitoring-location-select');
@@ -60,7 +60,7 @@ test('displays correct average for specific location by Name', async ({ page }) 
 });
 
 test('switches between ID and Name display modes', async ({ page }) => {
-	loadFile(page);
+	await loadFile(page);
 
 	// Default is "By Name"
 	const byNameRadio = page.locator('input[type="radio"][value="name"]');
