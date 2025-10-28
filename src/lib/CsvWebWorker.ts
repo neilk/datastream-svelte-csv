@@ -9,7 +9,7 @@ import type {
 	WorkerRequestMessage,
 	WorkerResponseMessage,
 	SerializableParseResults
-} from './workerTypes.js';
+} from './WorkerTypes.js';
 
 /**
  * Convert ParseResults (with Maps) to SerializableParseResults (with arrays)

@@ -6,7 +6,7 @@ import type {
 	WorkerRequestMessage,
 	WorkerResponseMessage,
 	SerializableParseResults
-} from './workerTypes.js';
+} from './WorkerTypes.js';
 
 /**
  * Convert SerializableParseResults (with arrays) back to ParseResults (with Maps)
@@ -55,7 +55,7 @@ export async function parseCsv(webStream: ReadableStream): Promise<ParseResults>
 	return new Promise<ParseResults>((resolve, reject) => {
 		// Create worker from the worker module
 		// Vite will handle bundling the worker correctly with ?worker suffix
-		const worker = new Worker(new URL('./csvWorker.ts', import.meta.url), {
+		const worker = new Worker(new URL('./CsvWebWorker.ts', import.meta.url), {
 			type: 'module'
 		});
 
