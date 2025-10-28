@@ -157,7 +157,7 @@
 			style="display: none;"
 		/>
 		<p class="drop-text" aria-hidden="true">
-			Drag a file here, or <button
+			Drag a CSV file here, or <button
 				type="button"
 				onclick={handleUploadClick}
 				class="upload-button"
