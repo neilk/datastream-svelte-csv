@@ -182,38 +182,6 @@ The CI pipeline runs on:
 - Failed test runs will have downloadable Playwright reports as artifacts
 - Artifacts are retained for 30 days
 
-## Project Structure
-
-```
-.
-├── .github/workflows/    # GitHub Actions CI configuration
-├── .husky/               # Git hooks
-├── src/
-│   ├── lib/             # Reusable library code and unit tests
-│   └── routes/          # SvelteKit pages and components
-├── tests/               # Playwright integration tests
-├── static/              # Static assets
-├── sample/              # Sample CSV files for testing
-├── jest.config.js       # Jest configuration
-├── playwright.config.ts # Playwright configuration
-├── svelte.config.js     # SvelteKit configuration
-└── package.json         # Dependencies and scripts
-```
-
-## Available Scripts
-
-| Script                 | Description                  |
-| ---------------------- | ---------------------------- |
-| `npm run dev`          | Start development server     |
-| `npm run build`        | Build for production         |
-| `npm run preview`      | Preview production build     |
-| `npm run check`        | Run TypeScript type checking |
-| `npm run format`       | Format code with Prettier    |
-| `npm run test:unit`    | Run Jest unit tests          |
-| `npm run test:browser` | Run Playwright browser tests |
-| `npm test`             | Run all tests                |
-| `npm run test:ci`      | Run tests in CI mode         |
-
 ## Technologies
 
 - **Framework**: [SvelteKit](https://kit.svelte.dev/)
