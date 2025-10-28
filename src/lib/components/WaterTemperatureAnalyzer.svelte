@@ -144,6 +144,8 @@
 		ondragover={handleDragOver}
 		ondragleave={handleDragLeave}
 		ondrop={handleDrop}
+		role="region"
+		aria-label="CSV file upload area"
 	>
 		<input
 			bind:this={fileInput}
@@ -151,11 +153,15 @@
 			type="file"
 			accept=".csv"
 			onchange={handleFileChange}
+			aria-label="Upload CSV file"
 			style="display: none;"
 		/>
-		<p class="drop-text">
-			Drag a file here, or <button type="button" onclick={handleUploadClick} class="upload-button"
-				>click to upload</button
+		<p class="drop-text" aria-hidden="true">
+			Drag a file here, or <button
+				type="button"
+				onclick={handleUploadClick}
+				class="upload-button"
+				aria-label="Select CSV file to upload">click to upload</button
 			>
 		</p>
 	</div>
