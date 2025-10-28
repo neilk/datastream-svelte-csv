@@ -4,7 +4,7 @@ A SvelteKit application for processing and analyzing water temperature data from
 
 ![](./watertempcomponent.png)
 
-You can see a [short movie](./watertempcomponent.mp4) here.
+You can [watch a video](https://raw.githubusercontent.com/neilk/datastream-svelte-csv/main/watertempcomponent.mp4) here.
 
 ## Prerequisites
 
