@@ -2,41 +2,33 @@
 
 import { parseCSV } from '../src/lib/CsvParserNode.js';
 
-async function main() {
-	const filePath = process.argv[2];
+async function main(filePath: string): Promise<void> {
+	console.log(`Parsing CSV file: ${filePath}\n`);
+	const results = await parseCSV(filePath);
 
-	if (!filePath) {
-		console.error('Usage: npm run parse -- <csv-file-path>');
-		process.exit(1);
+	console.log('=== Monitoring Locations ===');
+	console.log(`Found ${results.monitoringLocations.size} monitoring locations:\n`);
+	for (const id of Array.from(results.monitoringLocations.keys()).sort()) {
+		console.log(`  ${id}: ${results.monitoringLocations.get(id)}`);
 	}
 
-	try {
-		console.log(`Parsing CSV file: ${filePath}\n`);
+	console.log('\n=== Water Temperature Results ===\n');
+	for (const id of Array.from(results.monitoringLocationResults.keys()).sort()) {
+		const result = results.monitoringLocationResults.get(id);
+		const name = id === '-ALL-' ? 'ALL LOCATIONS' : results.monitoringLocations.get(id);
 
-		const results = await parseCSV(filePath);
-
-		console.log('=== Monitoring Locations ===');
-		console.log(`Found ${results.monitoringLocations.size} monitoring locations:\n`);
-		for (const [id, name] of results.monitoringLocations) {
-			console.log(`  ${id}: ${name}`);
-		}
-
-		console.log('\n=== Water Temperature Results ===\n');
-		for (const [locationId, result] of results.monitoringLocationResults) {
-			const locationName =
-				locationId === '-ALL-' ? 'ALL LOCATIONS' : results.monitoringLocations.get(locationId);
-
-			console.log(`${locationName} (${locationId}):`);
-			console.log(`  Average: ${result.average.toFixed(2)}°C`);
-		}
-	} catch (error) {
-		if (error instanceof Error) {
-			console.error(`Error: ${error.message}`);
-		} else {
-			console.error('An unexpected error occurred:', error);
-		}
-		process.exit(1);
+		console.log(`${id} (${name}):`);
+		console.log(`  Average: ${result?.average.toFixed(2)}°C`);
 	}
 }
 
-main();
+const filePath = process.argv[2];
+
+if (!filePath) {
+	console.error(`Usage: ${process.argv[0]} <csv-file-path>`);
+	process.exit(1);
+}
+
+main(filePath).catch((error) => {
+	throw error;
+});
