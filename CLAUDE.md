@@ -78,6 +78,17 @@ The task description is located in [TASK.md](./TASK.md).
       - Calculate the average of all, using the average and count of each for a weighted average. and add that value with monitoringLocation = "-ALL-" to monitoringLocationResults.
       - Collect all values with “ResultValue” where “CharacteristicName" is equal to "Temperature, water”.
 
+### Frontend libraries
+
+We are using `csv-parse`. The recommended method for deploying it on the web is to statically serve the "esm" distribution.
+
+Once `csv-parse` is installed, the files we need are here:
+`node_modules/csv-parse/dist/esm`
+
+We can simply load those files, in a vanilla way, by making them statically served with our Svelte server. (If necessary we can just copy them into our source tree).
+
+An example of using `parse` from ESM modules in the browser is in `docs/demo/esm-sample`. There is also a webpack demo in `docs/demo/webpack-sample` which may give you insights for configuring vite.
+
 ### SvelteKit component
 
 - The SvelteKit component will display:

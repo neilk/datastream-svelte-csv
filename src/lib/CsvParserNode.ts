@@ -1,4 +1,11 @@
-import { parse } from 'csv-parse/browser/esm';
+/**
+ * Node.js-specific CSV parsing functions
+ * This file should only be imported in Node.js environments (tests, CLI scripts)
+ */
+
+import { parse } from 'csv-parse';
+import { createReadStream } from 'fs';
+import { pipeline } from 'stream/promises';
 import type { Record, LocationResult } from './RecordDataAccumulator.js';
 import { RecordDataAccumulator } from './RecordDataAccumulator.js';
 
@@ -51,17 +58,13 @@ function normalizeHeaders(headers: string[]): string[] {
 }
 
 /**
- * Parses CSV data from a Web ReadableStream (browser-compatible).
+ * Parses a CSV file from the file system (Node.js only).
  * Extracts averages of water temperature data by monitoring location.
  *
- * @param webStream - A Web ReadableStream containing CSV data (e.g., from File.stream())
- * @param accumulator - Optional RecordDataAccumulator instance to use for processing
+ * @param filePath - Path to the CSV file to parse
  * @returns Parse results containing monitoring locations and their statistics
  */
-export async function parseCSVFromStream(
-	webStream: ReadableStream,
-	accumulator: RecordDataAccumulator = new RecordDataAccumulator()
-): Promise<ParseResults> {
+export async function parseCSV(filePath: string): Promise<ParseResults> {
 	let headersValidated = false;
 
 	const parser = parse({
@@ -78,6 +81,7 @@ export async function parseCSVFromStream(
 	});
 
 	// Process each record as it is parsed
+	const accumulator = new RecordDataAccumulator();
 	parser.on('readable', function () {
 		let record: Record;
 		while ((record = parser.read()) !== null) {
@@ -85,44 +89,26 @@ export async function parseCSVFromStream(
 		}
 	});
 
-	// Create promises for completion and error handling
-	const parserPromise = new Promise<ParseResults>((resolve, reject) => {
-		parser.on('error', (error) => {
-			reject(error);
-		});
-
-		parser.on('end', () => {
-			resolve({
-				monitoringLocations: accumulator.getLocations(),
-				monitoringLocationResults: accumulator.getLocationResults()
-			});
-		});
+	// Handle parser errors explicitly
+	parser.on('error', (error) => {
+		stream.destroy();
+		throw error;
 	});
 
+	// Stream the file through the parser
+	const stream = createReadStream(filePath);
+
 	try {
-		// Read from Web ReadableStream and write to parser
-		const reader = webStream.getReader();
-		const decoder = new TextDecoder();
-
-		while (true) {
-			const { done, value } = await reader.read();
-
-			if (done) {
-				parser.end();
-				break;
-			}
-
-			// Decode the chunk and write to parser
-			const chunk = decoder.decode(value, { stream: true });
-			parser.write(chunk);
-		}
-
-		// Wait for parsing to complete
-		return await parserPromise;
+		await pipeline(stream, parser);
 	} catch (error) {
 		if (!headersValidated) {
 			throw new Error('CSV file must have a header line');
 		}
 		throw error;
 	}
+
+	return {
+		monitoringLocations: accumulator.getLocations(),
+		monitoringLocationResults: accumulator.getLocationResults()
+	};
 }
