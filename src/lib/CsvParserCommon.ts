@@ -1,0 +1,85 @@
+import type { LocationResult, Record } from './RecordDataAccumulator.js';
+import { RecordDataAccumulator } from './RecordDataAccumulator.js';
+
+/**
+ * Results from parsing a CSV file
+ */
+export interface ParseResults {
+	monitoringLocations: Map<string, string>; // ID -> Name
+	monitoringLocationResults: Map<string, LocationResult>; // ID -> Result
+}
+
+/**
+ * Required columns (in their canonical intercapped form)
+ */
+const REQUIRED_COLUMNS = [
+	'ResultValue',
+	'CharacteristicName',
+	'MonitoringLocationID',
+	'MonitoringLocationName'
+];
+
+/**
+ * Map of lowercase column names to their intercapped canonical form
+ */
+const REQUIRED_COLUMN_NAME_MAP = new Map<string, string>(
+	REQUIRED_COLUMNS.map((val) => [val.toLowerCase(), val])
+);
+
+/**
+ * Validates that required columns exist in the CSV header
+ */
+function validateHeaders(headers: string[]): void {
+	const normalizedHeaders = headers.map((h) => h.toLowerCase());
+	for (const requiredLowercase of REQUIRED_COLUMN_NAME_MAP.keys()) {
+		if (!normalizedHeaders.includes(requiredLowercase)) {
+			const canonicalName = REQUIRED_COLUMN_NAME_MAP.get(requiredLowercase);
+			throw new Error(`Missing required column: ${canonicalName} (case-insensitive)`);
+		}
+	}
+}
+
+/**
+ * Normalizes column headers to their canonical intercapped form
+ */
+function normalizeHeaders(headers: string[]): string[] {
+	return headers.map((header) => {
+		const lowercase = header.toLowerCase();
+		return REQUIRED_COLUMN_NAME_MAP.get(lowercase) || header;
+	});
+}
+
+export function getParser(
+	parse: Function,
+	errorCallback: (error: Error) => void,
+	endCallback: (parseResults: ParseResults) => void,
+	accumulator: RecordDataAccumulator = new RecordDataAccumulator()
+) {
+	const parser = parse({
+		columns: (headers: string[]) => {
+			// Validate headers on first row
+			validateHeaders(headers);
+
+			// Normalize column names to intercapped form
+			return normalizeHeaders(headers);
+		},
+		skip_empty_lines: true,
+		trim: true
+	});
+
+	parser.on('readable', function () {
+		let record: Record;
+		while ((record = parser.read()) !== null) {
+			accumulator.add(record);
+		}
+	});
+
+	parser.on('error', errorCallback);
+	parser.on('end', () => {
+		const results: ParseResults = {
+			monitoringLocations: accumulator.getLocations(),
+			monitoringLocationResults: accumulator.getLocationResults()
+		};
+		endCallback(results);
+	});
+}
