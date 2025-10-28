@@ -24,6 +24,7 @@
 	let errorMessage: string | null = $state(null);
 	let parseResults: ParseResults | null = $state(null);
 	let selectedLocationId: string = $state('-ALL-');
+	let displayMode: 'id' | 'name' = $state('name');
 
 	// Derived state
 	let monitoringLocations = $derived(
@@ -108,6 +109,18 @@
 				<label for="monitoring-location-select">
 					<strong>Monitoring Location:</strong>
 				</label>
+
+				<div class="display-mode-selector">
+					<label>
+						<input type="radio" name="display-mode" value="name" bind:group={displayMode} />
+						By Name
+					</label>
+					<label>
+						<input type="radio" name="display-mode" value="id" bind:group={displayMode} />
+						By ID
+					</label>
+				</div>
+
 				<select
 					id="monitoring-location-select"
 					value={selectedLocationId}
@@ -115,7 +128,7 @@
 				>
 					<option value="-ALL-">All Locations (Average)</option>
 					{#each [...monitoringLocations.entries()] as [id, name]}
-						<option value={id}>{name}</option>
+						<option value={id}>{displayMode === 'id' ? id : name}</option>
 					{/each}
 				</select>
 			</div>
@@ -223,10 +236,30 @@
 		border-radius: 8px;
 	}
 
-	.location-selector label {
+	.location-selector > label {
 		display: block;
 		margin-bottom: 0.5rem;
 		color: #333;
+	}
+
+	.display-mode-selector {
+		display: flex;
+		gap: 1.5rem;
+		margin: 1rem 0;
+		padding: 0.5rem 0;
+	}
+
+	.display-mode-selector label {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		color: #333;
+		cursor: pointer;
+		font-size: 0.95rem;
+	}
+
+	.display-mode-selector input[type='radio'] {
+		cursor: pointer;
 	}
 
 	.location-selector select {
