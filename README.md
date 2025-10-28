@@ -124,12 +124,12 @@ npm run test:unit
 
 Unit tests are located in `src/` with the pattern `*.test.ts`.
 
-### Integration tests (Playwright)
+### Browser tests (Playwright)
 
-Run integration tests only:
+Run browser tests only:
 
 ```bash
-npm run test:integration
+npm run test:browser
 ```
 
 Integration tests are located in `tests/` with the pattern `*.spec.ts`.
@@ -202,17 +202,17 @@ The CI pipeline runs on:
 
 ## Available Scripts
 
-| Script                     | Description                      |
-| -------------------------- | -------------------------------- |
-| `npm run dev`              | Start development server         |
-| `npm run build`            | Build for production             |
-| `npm run preview`          | Preview production build         |
-| `npm run check`            | Run TypeScript type checking     |
-| `npm run format`           | Format code with Prettier        |
-| `npm run test:unit`        | Run Jest unit tests              |
-| `npm run test:integration` | Run Playwright integration tests |
-| `npm test`                 | Run all tests                    |
-| `npm run test:ci`          | Run tests in CI mode             |
+| Script                 | Description                  |
+| ---------------------- | ---------------------------- |
+| `npm run dev`          | Start development server     |
+| `npm run build`        | Build for production         |
+| `npm run preview`      | Preview production build     |
+| `npm run check`        | Run TypeScript type checking |
+| `npm run format`       | Format code with Prettier    |
+| `npm run test:unit`    | Run Jest unit tests          |
+| `npm run test:browser` | Run Playwright browser tests |
+| `npm test`             | Run all tests                |
+| `npm run test:ci`      | Run tests in CI mode         |
 
 ## Technologies
 

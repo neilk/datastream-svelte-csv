@@ -15,9 +15,9 @@
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
 		"test:unit": "jest",
-		"test:integration": "playwright test",
-		"test": "npm run test:unit && npm run test:integration",
-		"test:ci": "npm run test:unit && npm run test:integration",
+		"test:browser": "playwright test",
+		"test": "npm run test:unit && npm run test:browser",
+		"test:ci": "npm run test:unit && npm run test:browser",
 		"prepare": "husky",
 		"parse": "tsx scripts/parse.ts"
 	},
