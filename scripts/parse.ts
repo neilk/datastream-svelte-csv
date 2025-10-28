@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { parseCSV } from '../src/lib/csvParser.js';
+import { parseCSV } from '../src/lib/CsvParser.js';
 
 async function main() {
 	const filePath = process.argv[2];
