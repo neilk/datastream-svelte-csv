@@ -25,6 +25,10 @@
 	let parseResults: ParseResults | null = $state(null);
 	let selectedLocationId: string = $state('-ALL-');
 	let displayMode: 'id' | 'name' = $state('name');
+	let isDragging = $state(false);
+
+	// Refs
+	let fileInput: HTMLInputElement;
 
 	// Derived state
 	let monitoringLocations = $derived(
@@ -44,19 +48,9 @@
 	});
 
 	/**
-	 * Handle file input change event and process the file
+	 * Process a file - common logic for both file input and drag-and-drop
 	 */
-	async function handleFileChange(event: Event) {
-		const target = event.target as HTMLInputElement;
-		const file = target.files?.[0] || null;
-
-		if (!file) {
-			selectedFile = null;
-			parseResults = null;
-			errorMessage = null;
-			return;
-		}
-
+	async function processFile(file: File) {
 		selectedFile = file;
 		errorMessage = null;
 		isProcessing = true;
@@ -80,6 +74,59 @@
 	}
 
 	/**
+	 * Handle file input change event
+	 */
+	async function handleFileChange(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const file = target.files?.[0] || null;
+
+		if (!file) {
+			selectedFile = null;
+			parseResults = null;
+			errorMessage = null;
+			return;
+		}
+
+		await processFile(file);
+	}
+
+	/**
+	 * Handle click on upload button
+	 */
+	function handleUploadClick() {
+		fileInput.click();
+	}
+
+	/**
+	 * Handle drag over event
+	 */
+	function handleDragOver(event: DragEvent) {
+		event.preventDefault();
+		isDragging = true;
+	}
+
+	/**
+	 * Handle drag leave event
+	 */
+	function handleDragLeave(event: DragEvent) {
+		event.preventDefault();
+		isDragging = false;
+	}
+
+	/**
+	 * Handle drop event
+	 */
+	async function handleDrop(event: DragEvent) {
+		event.preventDefault();
+		isDragging = false;
+
+		const file = event.dataTransfer?.files[0];
+		if (file) {
+			await processFile(file);
+		}
+	}
+
+	/**
 	 * Handle monitoring location selection change
 	 */
 	function handleLocationChange(event: Event) {
@@ -91,11 +138,26 @@
 <div class="water-temp-analyzer">
 	<h1>{title}</h1>
 
-	<div class="file-input-section">
-		<label for="csv-file-input">
-			<strong>Select CSV File:</strong>
-		</label>
-		<input id="csv-file-input" type="file" accept=".csv" onchange={handleFileChange} />
+	<div
+		class="file-input-section"
+		class:dragging={isDragging}
+		ondragover={handleDragOver}
+		ondragleave={handleDragLeave}
+		ondrop={handleDrop}
+	>
+		<input
+			bind:this={fileInput}
+			id="csv-file-input"
+			type="file"
+			accept=".csv"
+			onchange={handleFileChange}
+			style="display: none;"
+		/>
+		<p class="drop-text">
+			Drag a file here, or <button type="button" onclick={handleUploadClick} class="upload-button"
+				>click to upload</button
+			>
+		</p>
 	</div>
 
 	{#if errorMessage}
@@ -182,25 +244,53 @@
 
 	.file-input-section {
 		margin: 2rem 0;
-		padding: 1.5rem;
-		border: 2px dashed #ccc;
-		border-radius: 8px;
+		padding: 4rem 2rem;
+		border: 3px dashed #ccc;
+		border-radius: 12px;
 		background-color: #f9f9f9;
-	}
-
-	.file-input-section label {
-		display: block;
-		margin-bottom: 0.5rem;
-		color: #333;
-	}
-
-	.file-input-section input[type='file'] {
-		display: block;
-		padding: 0.5rem;
-		border: 1px solid #ddd;
-		border-radius: 4px;
-		background-color: white;
+		text-align: center;
 		cursor: pointer;
+		transition: all 0.3s ease;
+	}
+
+	.file-input-section:hover {
+		border-color: #667eea;
+		background-color: #f0f4ff;
+	}
+
+	.file-input-section.dragging {
+		border-color: #667eea;
+		background-color: #e3f2fd;
+		border-style: solid;
+	}
+
+	.drop-text {
+		margin: 0;
+		font-size: 1.25rem;
+		color: #666;
+	}
+
+	.upload-button {
+		background: none;
+		border: none;
+		color: #667eea;
+		font-size: 1.25rem;
+		font-weight: 600;
+		text-decoration: underline;
+		cursor: pointer;
+		padding: 0;
+		font-family: inherit;
+		transition: color 0.2s ease;
+	}
+
+	.upload-button:hover {
+		color: #764ba2;
+	}
+
+	.upload-button:focus {
+		outline: 2px solid #667eea;
+		outline-offset: 2px;
+		border-radius: 2px;
 	}
 
 	.error-message {
@@ -302,11 +392,5 @@
 		font-weight: bold;
 		margin: 1rem 0;
 		text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-	}
-
-	.temperature-metadata {
-		color: rgba(255, 255, 255, 0.9);
-		font-size: 0.9rem;
-		margin-top: 1rem;
 	}
 </style>
