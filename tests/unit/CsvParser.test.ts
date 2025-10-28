@@ -37,3 +37,11 @@ describe('CSV Parser', () => {
 		});
 	});
 });
+
+// TODO
+// Improperly formatted files
+// Zero length files
+// Files with bad data in columns we want to look at
+// Large files ~1MB
+// CSVs that don't have required columns
+// CSVs that have null values in required values
