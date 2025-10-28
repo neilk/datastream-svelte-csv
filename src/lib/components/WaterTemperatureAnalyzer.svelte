@@ -251,7 +251,7 @@
 	.file-input-section {
 		margin: 2rem 0;
 		padding: 4rem 2rem;
-		border: 3px dashed #ccc;
+		border: 3px solid #ccc;
 		border-radius: 12px;
 		background-color: #f9f9f9;
 		text-align: center;
@@ -380,23 +380,25 @@
 
 	.temperature-display {
 		flex: 1;
-		padding: 2rem;
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-		border-radius: 12px;
-		color: white;
-		text-align: center;
+		padding: 1rem;
+		background-color: #f5f5f5;
+		border: 1px solid #ddd;
+		border-radius: 8px;
+		color: #333;
+		text-align: left;
 	}
 
 	.temperature-display h2 {
-		color: white;
-		margin-bottom: 1rem;
-		font-weight: 500;
+		color: #333;
+		margin: 0 0 0.5rem 0;
+		font-weight: 600;
+		font-size: 1rem;
 	}
 
 	.temperature-value {
-		font-size: 4rem;
-		font-weight: bold;
-		margin: 1rem 0;
-		text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+		font-size: 3rem;
+		font-weight: 600;
+		margin: 0;
+		color: #333;
 	}
 </style>
