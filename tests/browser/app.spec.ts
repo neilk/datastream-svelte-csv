@@ -85,10 +85,3 @@ test('switches between ID and Name display modes', async ({ page }) => {
 	const firstOptionTextAfter = await firstOptionAfter.textContent();
 	expect(firstOptionTextAfter).toMatch(/^RivTemp-Qc-/); // Should start with ID pattern
 });
-
-// TODO:
-// improperly formatted files
-// zero length files
-// large files (~1MB)
-// replacing the file (or trashing it, blank the file)
-// display of filename

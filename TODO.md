@@ -1,4 +1,0 @@
-- Make the file component prettier
-- Make file removable
-- test file replacement etc as in test todos
-- proper spinner when working on a long file
