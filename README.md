@@ -2,6 +2,8 @@
 
 A SvelteKit application for processing and analyzing water temperature data from CSV files.
 
+![](./watertempcomponent.png)
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) (v22 or higher required)
