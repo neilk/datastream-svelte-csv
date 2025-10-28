@@ -4,7 +4,8 @@ export default {
 	testEnvironment: 'jsdom',
 	moduleNameMapper: {
 		'^\\$lib(.*)$': '<rootDir>/src/lib$1',
-		'^\\$app(.*)$': '<rootDir>/.svelte-kit/runtime/app$1'
+		'^\\$app(.*)$': '<rootDir>/.svelte-kit/runtime/app$1',
+		'^(\\.{1,2}/.*)\\.js$': '$1'
 	},
 	transform: {
 		'^.+\\.svelte$': [
