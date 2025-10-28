@@ -1,0 +1,42 @@
+/**
+ * Types for Web Worker communication
+ */
+
+import type { LocationResult } from './RecordDataAccumulator.js';
+
+/**
+ * Serializable version of ParseResults (Maps converted to arrays)
+ */
+export interface SerializableParseResults {
+	monitoringLocations: [string, string][]; // Array of [ID, Name] tuples
+	monitoringLocationResults: [string, LocationResult][]; // Array of [ID, Result] tuples
+}
+
+/**
+ * Message sent to worker to start parsing
+ */
+export interface WorkerRequestMessage {
+	type: 'parse';
+	fileData: ArrayBuffer;
+}
+
+/**
+ * Message sent from worker with results
+ */
+export interface WorkerSuccessMessage {
+	type: 'success';
+	results: SerializableParseResults;
+}
+
+/**
+ * Message sent from worker on error
+ */
+export interface WorkerErrorMessage {
+	type: 'error';
+	error: string;
+}
+
+/**
+ * All possible messages from worker
+ */
+export type WorkerResponseMessage = WorkerSuccessMessage | WorkerErrorMessage;

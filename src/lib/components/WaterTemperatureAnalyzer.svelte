@@ -186,11 +186,16 @@
 
 	{#if isProcessing}
 		<div class="processing-message">
-			<p>Processing file: <strong>{selectedFile?.name}</strong></p>
-			{#if selectedFile}
-				<p class="file-size">Size: {formatFileSize(selectedFile.size)}</p>
-			{/if}
-			<p>Please wait...</p>
+			<svg class="spinner" viewBox="0 0 50 50" aria-hidden="true">
+				<circle class="spinner-ring" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+			</svg>
+			<div class="processing-text">
+				<p>Processing file: <strong>{selectedFile?.name}</strong></p>
+				{#if selectedFile}
+					<p class="file-size">Size: {formatFileSize(selectedFile.size)}</p>
+				{/if}
+				<p>Please wait...</p>
+			</div>
 		</div>
 	{/if}
 
@@ -333,6 +338,49 @@
 		background-color: #e3f2fd;
 		border-left: 4px solid #2196f3;
 		border-radius: 4px;
+		display: flex;
+		align-items: flex-start;
+		gap: 1rem;
+	}
+
+	.spinner {
+		width: 40px;
+		height: 40px;
+		flex-shrink: 0;
+		animation: spin 1s linear infinite;
+	}
+
+	.spinner-ring {
+		stroke: #2196f3;
+		stroke-linecap: round;
+		stroke-dasharray: 90, 150;
+		stroke-dashoffset: 0;
+		animation: dash 1.5s ease-in-out infinite;
+	}
+
+	@keyframes spin {
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+
+	@keyframes dash {
+		0% {
+			stroke-dasharray: 1, 150;
+			stroke-dashoffset: 0;
+		}
+		50% {
+			stroke-dasharray: 90, 150;
+			stroke-dashoffset: -35;
+		}
+		100% {
+			stroke-dasharray: 90, 150;
+			stroke-dashoffset: -124;
+		}
+	}
+
+	.processing-text {
+		flex: 1;
 	}
 
 	.processing-message p {
