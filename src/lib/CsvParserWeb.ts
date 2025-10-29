@@ -19,45 +19,17 @@ function deserializeResults(serialized: SerializableParseResults): ParseResults 
 }
 
 /**
- * Parses CSV data from a Web ReadableStream (browser-compatible). This is more complex than
- * the CLI case because we are communicating with a Web Worker to parse data on a separate thread,
- * preventing the browser UI from freezing.
+ * Parses CSV data from a Web ReadableStream (browser-compatible) using true streaming.
  *
- * Ultimately, it does accept the incoming stream of file data and wraps the results in an ordinary
- * promise.
- *
- * Extracts averages of water temperature data by monitoring location.
+ * Chunks are sent to a Web Worker as they arrive, avoiding loading the entire file into memory.
+ * This allows processing of large multi-megabyte CSV files without blocking the UI or
+ * consuming excessive memory.
  *
  * @param webStream - A Web ReadableStream containing CSV data (e.g., from File.stream())
  * @returns Parse results containing monitoring locations and their statistics
  */
 export async function parseCsv(webStream: ReadableStream): Promise<ParseResults> {
-	// First, read the entire stream into an ArrayBuffer
-	// This is necessary because we need to transfer the data to the worker
-	const chunks: Uint8Array[] = [];
-	const reader = webStream.getReader();
-
-	try {
-		while (true) {
-			const { done, value } = await reader.read();
-			if (done) break;
-			chunks.push(value);
-		}
-	} finally {
-		reader.releaseLock();
-	}
-
-	// Combine all chunks into a single ArrayBuffer
-	const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-	const combined = new Uint8Array(totalLength);
-	let offset = 0;
-	for (const chunk of chunks) {
-		combined.set(chunk, offset);
-		offset += chunk.length;
-	}
-
-	// Create and communicate with the worker
-	return new Promise<ParseResults>((resolve, reject) => {
+	return new Promise<ParseResults>(async (resolve, reject) => {
 		// Create worker from the worker module
 		// Vite will handle bundling the worker correctly with ?worker suffix
 		const worker = new Worker(new URL('./CsvWebWorker.ts', import.meta.url), {
@@ -85,11 +57,36 @@ export async function parseCsv(webStream: ReadableStream): Promise<ParseResults>
 			reject(new Error(`Worker error: ${error.message}`));
 		};
 
-		// Send the file data to the worker
-		const request: WorkerRequestMessage = {
-			type: 'parse',
-			fileData: combined.buffer
-		};
-		worker.postMessage(request, [combined.buffer]); // Transfer the buffer
+		try {
+			// Send start message to initialize the parser
+			const startMessage: WorkerRequestMessage = { type: 'start' };
+			worker.postMessage(startMessage);
+
+			// Stream chunks to the worker as they arrive
+			const reader = webStream.getReader();
+
+			try {
+				while (true) {
+					const { done, value } = await reader.read();
+					if (done) break;
+
+					// Send chunk to worker (transfer the buffer for efficiency)
+					const chunkMessage: WorkerRequestMessage = {
+						type: 'chunk',
+						data: value.buffer
+					};
+					worker.postMessage(chunkMessage, [value.buffer]);
+				}
+			} finally {
+				reader.releaseLock();
+			}
+
+			// Send end message to signal completion
+			const endMessage: WorkerRequestMessage = { type: 'end' };
+			worker.postMessage(endMessage);
+		} catch (error) {
+			worker.terminate();
+			reject(error);
+		}
 	});
 }

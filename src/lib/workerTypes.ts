@@ -17,10 +17,29 @@ export interface SerializableParseResults {
 /**
  * Message sent to worker to start parsing
  */
-export interface WorkerRequestMessage {
-	type: 'parse';
-	fileData: ArrayBuffer;
+export interface WorkerStartMessage {
+	type: 'start';
 }
+
+/**
+ * Message sent to worker with a chunk of data
+ */
+export interface WorkerChunkMessage {
+	type: 'chunk';
+	data: ArrayBuffer;
+}
+
+/**
+ * Message sent to worker to signal end of stream
+ */
+export interface WorkerEndMessage {
+	type: 'end';
+}
+
+/**
+ * All possible messages sent to worker
+ */
+export type WorkerRequestMessage = WorkerStartMessage | WorkerChunkMessage | WorkerEndMessage;
 
 /**
  * Message sent from worker with results
