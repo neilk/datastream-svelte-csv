@@ -33,33 +33,28 @@ self.onmessage = async (event: MessageEvent<WorkerRequestMessage>) => {
 			// Get the file and create a stream from it
 			const file = message.file;
 			const stream = file.stream();
-			const reader = stream.getReader();
-			const decoder = new TextDecoder();
 
 			// Create a promise that will resolve when parsing is complete
 			const parsePromise = new Promise<ParseResults>((resolve, reject) => {
 				const parser = getParser(parse, resolve, reject);
+				const decoder = new TextDecoder();
 
-				// Stream the file data to the parser
-				async function readAndParse() {
-					try {
-						while (true) {
-							const { done, value } = await reader.read();
-							if (done) break;
-
-							// Decode the chunk and write to parser
-							const text = decoder.decode(value, { stream: true });
-							parser.write(text);
-						}
-						// Signal end of stream
+				// Create a WritableStream that writes to the parser
+				const writable = new WritableStream({
+					write(chunk: Uint8Array) {
+						const text = decoder.decode(chunk, { stream: true });
+						parser.write(text);
+					},
+					close() {
 						parser.end();
-					} catch (error) {
-						reject(error instanceof Error ? error : new Error('Stream reading error'));
+					},
+					abort(err) {
+						reject(err);
 					}
-				}
+				});
 
-				// Start reading (fire and forget)
-				readAndParse();
+				// Pipe the file stream to the parser (similar to Node's pipeline)
+				stream.pipeTo(writable).catch(reject);
 			});
 
 			// Wait for parsing to complete
