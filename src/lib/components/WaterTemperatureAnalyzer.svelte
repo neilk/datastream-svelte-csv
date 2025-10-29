@@ -56,11 +56,8 @@
 		isProcessing = true;
 
 		try {
-			// Get the file as a Web ReadableStream
-			const stream = file.stream();
-
-			// Parse the CSV file
-			const results = await parseCsv(stream);
+			// Parse the CSV file (the worker will create the stream)
+			const results = await parseCsv(file);
 
 			// Update state with results
 			parseResults = results;

@@ -40,11 +40,11 @@ The task description is located in [TASK.md](./TASK.md).
 - install ts-node as a development dependency to execute TypeScript locally.
 - Serve the app with the `http-server` library, e.g. `npx http-server -p 8000`, for manual testing.
 - Unit tests: test SvelteKit components with Jest.
-- Integration tests: use Playwright against a simple Chromium browser.
+- Browser tests: use Playwright against a simple Chromium browser.
   - Add a dummy test which only loads the page and checks that the page title is as we expect.
 - In package.json tests, set up "scripts" to:
   - run all unit tests (in our case, the Jest scripts).
-  - runs all integration tests (in our case, the Playwright scripts)
+  - runs all browser tests (in our case, the Playwright scripts)
     - run all tests, as we would in CI.
 - Set up a Github Action which runs the tests on every push to `main`.
   - it should install packages and development dependencies with `npm ci`.

@@ -15,31 +15,18 @@ export interface SerializableParseResults {
 }
 
 /**
- * Message sent to worker to start parsing
+ * Message sent to worker with a File to parse
  */
-export interface WorkerStartMessage {
-	type: 'start';
+export interface WorkerFileMessage {
+	type: 'file';
+	file: File;
 }
 
 /**
- * Message sent to worker with a chunk of data
+ * All possible messages sent to worker. If we set up other messages (for instance, cancelling processing)
+ * we can make this a union type
  */
-export interface WorkerChunkMessage {
-	type: 'chunk';
-	data: ArrayBuffer;
-}
-
-/**
- * Message sent to worker to signal end of stream
- */
-export interface WorkerEndMessage {
-	type: 'end';
-}
-
-/**
- * All possible messages sent to worker
- */
-export type WorkerRequestMessage = WorkerStartMessage | WorkerChunkMessage | WorkerEndMessage;
+export type WorkerRequestMessage = WorkerFileMessage;
 
 /**
  * Message sent from worker with results

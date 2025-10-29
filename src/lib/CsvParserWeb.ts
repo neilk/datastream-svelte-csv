@@ -19,17 +19,17 @@ function deserializeResults(serialized: SerializableParseResults): ParseResults 
 }
 
 /**
- * Parses CSV data from a Web ReadableStream (browser-compatible) using true streaming.
+ * Parses CSV data from a File object using true streaming in a Web Worker.
  *
- * Chunks are sent to a Web Worker as they arrive, avoiding loading the entire file into memory.
+ * The File object is transferred to the worker, which creates a stream and processes it.
  * This allows processing of large multi-megabyte CSV files without blocking the UI or
  * consuming excessive memory.
  *
- * @param webStream - A Web ReadableStream containing CSV data (e.g., from File.stream())
+ * @param file - A File object containing CSV data
  * @returns Parse results containing monitoring locations and their statistics
  */
-export async function parseCsv(webStream: ReadableStream): Promise<ParseResults> {
-	return new Promise<ParseResults>(async (resolve, reject) => {
+export async function parseCsv(file: File): Promise<ParseResults> {
+	return new Promise<ParseResults>((resolve, reject) => {
 		// Create worker from the worker module
 		// Vite will handle bundling the worker correctly with ?worker suffix
 		const worker = new Worker(new URL('./CsvWebWorker.ts', import.meta.url), {
@@ -57,36 +57,11 @@ export async function parseCsv(webStream: ReadableStream): Promise<ParseResults>
 			reject(new Error(`Worker error: ${error.message}`));
 		};
 
-		try {
-			// Send start message to initialize the parser
-			const startMessage: WorkerRequestMessage = { type: 'start' };
-			worker.postMessage(startMessage);
-
-			// Stream chunks to the worker as they arrive
-			const reader = webStream.getReader();
-
-			try {
-				while (true) {
-					const { done, value } = await reader.read();
-					if (done) break;
-
-					// Send chunk to worker (transfer the buffer for efficiency)
-					const chunkMessage: WorkerRequestMessage = {
-						type: 'chunk',
-						data: value.buffer
-					};
-					worker.postMessage(chunkMessage, [value.buffer]);
-				}
-			} finally {
-				reader.releaseLock();
-			}
-
-			// Send end message to signal completion
-			const endMessage: WorkerRequestMessage = { type: 'end' };
-			worker.postMessage(endMessage);
-		} catch (error) {
-			worker.terminate();
-			reject(error);
-		}
+		// Send the file to the worker
+		const fileMessage: WorkerRequestMessage = {
+			type: 'file',
+			file: file
+		};
+		worker.postMessage(fileMessage);
 	});
 }

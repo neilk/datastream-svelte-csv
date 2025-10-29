@@ -11,7 +11,6 @@ import type {
 	WorkerResponseMessage,
 	SerializableParseResults
 } from './WorkerTypes.js';
-import type { Parser } from 'csv-parse';
 
 /**
  * Convert ParseResults (with Maps) to SerializableParseResults (with arrays)
@@ -23,11 +22,6 @@ function serializeResults(results: ParseResults): SerializableParseResults {
 	};
 }
 
-// Worker state for streaming parsing
-let currentParser: Parser | null = null;
-let decoder: TextDecoder | null = null;
-let parsePromise: Promise<ParseResults> | null = null;
-
 /**
  * Handle messages from the main thread for streaming CSV parsing
  */
@@ -35,39 +29,38 @@ self.onmessage = async (event: MessageEvent<WorkerRequestMessage>) => {
 	const message = event.data;
 
 	try {
-		if (message.type === 'start') {
-			// Initialize parser and decoder for streaming
-			decoder = new TextDecoder();
+		if (message.type === 'file') {
+			// Get the file and create a stream from it
+			const file = message.file;
+			const stream = file.stream();
+			const reader = stream.getReader();
+			const decoder = new TextDecoder();
 
-			// Create promise that will resolve when parsing is complete
-			parsePromise = new Promise<ParseResults>((resolve, reject) => {
-				const errorCallback = (error: Error) => {
-					reject(error);
-				};
+			// Create a promise that will resolve when parsing is complete
+			const parsePromise = new Promise<ParseResults>((resolve, reject) => {
+				const parser = getParser(parse, resolve, reject);
 
-				const endCallback = (results: ParseResults) => {
-					resolve(results);
-				};
+				// Stream the file data to the parser
+				async function readAndParse() {
+					try {
+						while (true) {
+							const { done, value } = await reader.read();
+							if (done) break;
 
-				currentParser = getParser(parse, errorCallback, endCallback);
+							// Decode the chunk and write to parser
+							const text = decoder.decode(value, { stream: true });
+							parser.write(text);
+						}
+						// Signal end of stream
+						parser.end();
+					} catch (error) {
+						reject(error instanceof Error ? error : new Error('Stream reading error'));
+					}
+				}
+
+				// Start reading (fire and forget)
+				readAndParse();
 			});
-		} else if (message.type === 'chunk') {
-			// Process a chunk of data
-			if (!currentParser || !decoder) {
-				throw new Error('Parser not initialized. Send "start" message first.');
-			}
-
-			// Decode the chunk and write to parser
-			const text = decoder.decode(message.data, { stream: true });
-			currentParser.write(text);
-		} else if (message.type === 'end') {
-			// Signal end of stream and wait for results
-			if (!currentParser || !parsePromise) {
-				throw new Error('Parser not initialized. Send "start" message first.');
-			}
-
-			// End the parser - this will trigger the endCallback
-			currentParser.end();
 
 			// Wait for parsing to complete
 			const results = await parsePromise;
@@ -81,11 +74,6 @@ self.onmessage = async (event: MessageEvent<WorkerRequestMessage>) => {
 				results: serializedResults
 			};
 			self.postMessage(response);
-
-			// Clean up
-			currentParser = null;
-			decoder = null;
-			parsePromise = null;
 		}
 	} catch (error) {
 		// Send error message back to main thread
@@ -95,10 +83,5 @@ self.onmessage = async (event: MessageEvent<WorkerRequestMessage>) => {
 			error: errorMessage
 		};
 		self.postMessage(response);
-
-		// Clean up on error
-		currentParser = null;
-		decoder = null;
-		parsePromise = null;
 	}
 };

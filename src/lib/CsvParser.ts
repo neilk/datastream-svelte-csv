@@ -70,8 +70,8 @@ function normalizeHeaders(headers: string[]): string[] {
  */
 export function getParser(
 	parse: Function,
-	errorCallback: (error: Error) => void,
 	endCallback: (parseResults: ParseResults) => void,
+	errorCallback: (error: Error) => void,
 	accumulator: RecordDataAccumulator = new RecordDataAccumulator()
 ): Parser {
 	const parser = parse({

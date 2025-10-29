@@ -116,7 +116,7 @@ npm run check:watch
 npm test
 ```
 
-This runs both unit tests (Jest) and integration tests (Playwright) sequentially.
+This runs both unit tests (Jest) and browser tests (Playwright) sequentially.
 
 ### Unit tests (Jest)
 
@@ -136,9 +136,9 @@ Run browser tests only:
 npm run test:browser
 ```
 
-Integration tests are located in `tests/` with the pattern `*.spec.ts`.
+Browser tests are located in `tests/` with the pattern `*.spec.ts`.
 
-**Note:** Integration tests require the application to be built first. The test script automatically builds and starts a preview server.
+**Note:** Browser tests require the application to be built first. The test script automatically builds and starts a preview server.
 
 ### CI testing
 

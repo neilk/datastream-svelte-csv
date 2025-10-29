@@ -29,7 +29,7 @@ export async function parseCsv(filePath: string): Promise<ParseResults> {
 			resolve(results);
 		};
 
-		const parser = getParser(parse, errorCallback, endCallback);
+		const parser = getParser(parse, endCallback, errorCallback);
 
 		await pipeline(stream, parser);
 	});
