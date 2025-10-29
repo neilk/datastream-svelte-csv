@@ -1,5 +1,9 @@
 #!/usr/bin/env ts-node
 
+// Command-line utility to parse a CSV file and display results.
+// This repository is mostly about creating a web app, so this is just for convenient testing of
+// parsing logic.
+
 import { parseCsv } from '../src/lib/CsvParserCli.js';
 
 async function main(filePath: string): Promise<void> {

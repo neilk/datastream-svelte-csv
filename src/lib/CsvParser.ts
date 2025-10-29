@@ -1,3 +1,10 @@
+/**
+ * This is a common library containing the logic for processing CSV files.
+ * We have two entry points for CSV processing - command-line and web - that use
+ * slightly different abstractions for streaming data. But this library presents
+ * a parser that uses the same logic in both.
+ */
+
 import type { Parser } from 'csv-parse';
 import type { LocationResult, Record } from './RecordDataAccumulator.js';
 import { RecordDataAccumulator } from './RecordDataAccumulator.js';
@@ -50,6 +57,17 @@ function normalizeHeaders(headers: string[]): string[] {
 	});
 }
 
+/**
+ * Our two entry points - CLI and web - will configure this parser to emit events that they
+ * will then make use of in their own environments. The parser will usually make its own
+ * "accumulator", though we leave the option open to provide a mock for unit testing.
+ *
+ * @param parse
+ * @param errorCallback
+ * @param endCallback
+ * @param accumulator
+ * @returns
+ */
 export function getParser(
 	parse: Function,
 	errorCallback: (error: Error) => void,

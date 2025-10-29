@@ -3,9 +3,9 @@
 	 * Reusable Water Temperature Analyzer Component
 	 *
 	 * This component analyzes CSV files containing water temperature data
-	 * and displays aggregate statistics by monitoring location.
+	 * and displays aggregate statistics by monitoring location. All processing
+	 * happens client-side.
 	 *
-	 * Can be dropped into any Svelte application.
 	 */
 
 	import { parseCsv, type ParseResults } from '$lib/CsvParserWeb';

@@ -1,4 +1,20 @@
 /**
+ * This library defines a "RecordDataAccumulator", which sounds fancy, but it's as simple
+ * as "folding" over a long array, for fans of functional programming.
+ *
+ * This works in a streaming context, which is essential for efficiency when we're processing
+ * possibly hundreds of megabytes in the browser.
+ *
+ * This coding exercise does not require us to keep all the data around. It only requires us
+ * to extract some stats. So, the RecordDataAccumulator will simply read parsed CSV lines, and
+ * accumulate results.
+ *
+ * One trick used here is that we accumulate a histogram of temperature results per location. That
+ * allows us to calculate the averages precisely with a much smaller amount of saved data, with no
+ * loss of information. (See ResultHistogram below).
+ */
+
+/**
  * Data record (normalized to intercapped)
  */
 export interface Record {

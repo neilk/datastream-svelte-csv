@@ -12,6 +12,8 @@ import { type ParseResults, getParser } from './CsvParser.js';
  * Parses a CSV file from the file system (Node.js only).
  * Extracts averages of water temperature data by monitoring location.
  *
+ * Wraps the entire set of `parser` events and callbacks in a promise.
+ *
  * @param filePath - Path to the CSV file to parse
  * @returns Parse results containing monitoring locations and their statistics
  */

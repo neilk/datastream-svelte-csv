@@ -1,5 +1,7 @@
 /**
  * Types for Web Worker communication
+ * Web Workers are dumb and only allow string-serialized communication, but at least we can
+ * send JSON back and forth and turn it into typed messages.
  */
 
 import type { LocationResult } from './RecordDataAccumulator.js';

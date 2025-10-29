@@ -23,6 +23,9 @@ function serializeResults(results: ParseResults): SerializableParseResults {
 
 /**
  * Parse CSV data from ArrayBuffer
+ *
+ * Passes callbacks into the `parser` and wraps its processing in a simple promise.
+ *
  */
 function parseCsvData(fileData: ArrayBuffer): Promise<ParseResults> {
 	return new Promise<ParseResults>((resolve, reject) => {
@@ -47,7 +50,7 @@ function parseCsvData(fileData: ArrayBuffer): Promise<ParseResults> {
 }
 
 /**
- * Handle messages from the main thread
+ * Handle messages from the main thread.
  */
 self.onmessage = async (event: MessageEvent<WorkerRequestMessage>) => {
 	const { type, fileData } = event.data;

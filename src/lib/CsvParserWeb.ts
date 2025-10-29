@@ -19,8 +19,13 @@ function deserializeResults(serialized: SerializableParseResults): ParseResults 
 }
 
 /**
- * Parses CSV data from a Web ReadableStream (browser-compatible).
- * Uses a Web Worker to parse data on a separate thread, preventing UI freezing.
+ * Parses CSV data from a Web ReadableStream (browser-compatible). This is more complex than
+ * the CLI case because we are communicating with a Web Worker to parse data on a separate thread,
+ * preventing the browser UI from freezing.
+ *
+ * Ultimately, it does accept the incoming stream of file data and wraps the results in an ordinary
+ * promise.
+ *
  * Extracts averages of water temperature data by monitoring location.
  *
  * @param webStream - A Web ReadableStream containing CSV data (e.g., from File.stream())
