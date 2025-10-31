@@ -291,19 +291,21 @@
 			{#if fileProcessing.state === 'completed' && fileProcessing.results}
 				<div class="results-content">
 					<div class="location-selector">
-						<label for="monitoring-location-select">
-							<strong>Monitoring Location:</strong>
-						</label>
+						<div class="location-label-row">
+							<label for="monitoring-location-select">
+								<strong>Monitoring Location:</strong>
+							</label>
 
-						<div class="display-mode-selector">
-							<label>
-								<input type="radio" name="display-mode" value="name" bind:group={displayMode} />
-								By Name
-							</label>
-							<label>
-								<input type="radio" name="display-mode" value="id" bind:group={displayMode} />
-								By ID
-							</label>
+							<span class="display-mode-selector">
+								<label>
+									<input type="radio" name="display-mode" value="name" bind:group={displayMode} />
+									By Name
+								</label>
+								<label>
+									<input type="radio" name="display-mode" value="id" bind:group={displayMode} />
+									By ID
+								</label>
+							</span>
 						</div>
 
 						<select
@@ -415,7 +417,6 @@
 	.error-message {
 		padding: 1rem;
 		background-color: #ffebee;
-		border-left: 4px solid #f44336;
 	}
 
 	.error-message p {
@@ -536,21 +537,24 @@
 
 	.location-selector {
 		flex: 3;
-		padding: 1rem;
+		padding: 0 1rem 0 0;
 		border-right: 1px solid #ddd;
 	}
 
-	.location-selector > label {
-		display: block;
-		margin-bottom: 0.5rem;
+	.location-label-row {
+		display: flex;
+		align-items: center;
+		gap: 2rem;
+		margin-bottom: 1rem;
+	}
+
+	.location-selector > .location-label-row > label {
 		color: #333;
 	}
 
 	.display-mode-selector {
 		display: flex;
 		gap: 1.5rem;
-		margin: 1rem 0;
-		padding: 0.5rem 0;
 	}
 
 	.display-mode-selector label {
@@ -578,7 +582,7 @@
 
 	.temperature-display {
 		flex: 2;
-		padding: 1rem;
+		padding: 0 0 0 1rem;
 		color: #333;
 		text-align: left;
 	}
