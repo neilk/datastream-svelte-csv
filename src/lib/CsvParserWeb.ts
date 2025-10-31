@@ -50,7 +50,14 @@ export function parseCsv(file: File): CsvParseOperation {
 	let worker: Worker | null = null;
 	let isCancelled = false;
 	let promiseReject: ((reason?: any) => void) | null = null;
-	let cancelTimeout: any = null;
+	let cancelTimeout: ReturnType<typeof setTimeout> | null = null;
+
+	const clearCancelTimeout = () => {
+		if (cancelTimeout !== null) {
+			clearTimeout(cancelTimeout);
+			cancelTimeout = null;
+		}
+	};
 
 	const promise = new Promise<ParseResults>((resolve, reject) => {
 		promiseReject = reject;
@@ -81,11 +88,7 @@ export function parseCsv(file: File): CsvParseOperation {
 				promiseReject = null; // Clear reject function
 				reject(new Error(message.error));
 			} else if (message.type === 'cancelled') {
-				// Worker responded to cancellation - clear the timeout
-				if (cancelTimeout !== null) {
-					clearTimeout(cancelTimeout);
-					cancelTimeout = null;
-				}
+				clearCancelTimeout();
 				if (worker) {
 					worker.terminate();
 					worker = null;
@@ -97,11 +100,7 @@ export function parseCsv(file: File): CsvParseOperation {
 
 		// Handle worker errors
 		worker.onerror = (error) => {
-			// Clear cancel timeout if it exists
-			if (cancelTimeout !== null) {
-				clearTimeout(cancelTimeout);
-				cancelTimeout = null;
-			}
+			clearCancelTimeout();
 			if (worker) {
 				worker.terminate();
 				worker = null;
@@ -147,7 +146,7 @@ export function parseCsv(file: File): CsvParseOperation {
 				promiseReject(new CancellationError());
 				promiseReject = null;
 			}
-		}, 500);
+		}, 150);
 	};
 
 	return { results: promise, cancel };
