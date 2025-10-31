@@ -198,67 +198,68 @@
 		</div>
 	{/if}
 
-	{#if isProcessing}
-		<div class="processing-message">
-			<svg class="spinner" viewBox="0 0 50 50" aria-hidden="true">
-				<circle class="spinner-ring" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
-			</svg>
-			<div class="processing-text">
-				<p>Processing file: <strong>{selectedFile?.name}</strong></p>
-				{#if selectedFile}
-					<p class="file-size">Size: {formatFileSize(selectedFile.size)}</p>
-				{/if}
-				<p>Please wait...</p>
-			</div>
-		</div>
-	{/if}
-
-	{#if parseResults && !isProcessing}
+	{#if selectedFile}
 		<div class="results-section">
-			{#if selectedFile}
-				<div class="file-info-header">
-					<h2>Results for: <span class="filename">{selectedFile.name}</span></h2>
-					<p class="file-date">Last modified: {formatFileDate(selectedFile.lastModified)}</p>
+			<div class="file-info-header">
+				<div class="file-info-content">
+					<h2><span class="filename">{selectedFile.name}</span></h2>
+					<p class="file-date">
+						Last modified: {formatFileDate(selectedFile.lastModified)} • Size: {formatFileSize(
+							selectedFile.size
+						)}
+					</p>
+					{#if isProcessing}
+						<p class="processing-status">Processing...</p>
+					{/if}
+				</div>
+				{#if isProcessing}
+					<svg class="spinner" viewBox="0 0 50 50" aria-hidden="true">
+						<circle class="spinner-ring" cx="25" cy="25" r="20" fill="none" stroke-width="5"
+						></circle>
+					</svg>
+				{/if}
+			</div>
+
+			{#if parseResults && !isProcessing}
+				<div class="results-content">
+					<div class="location-selector">
+						<label for="monitoring-location-select">
+							<strong>Monitoring Location:</strong>
+						</label>
+
+						<div class="display-mode-selector">
+							<label>
+								<input type="radio" name="display-mode" value="name" bind:group={displayMode} />
+								By Name
+							</label>
+							<label>
+								<input type="radio" name="display-mode" value="id" bind:group={displayMode} />
+								By ID
+							</label>
+						</div>
+
+						<select
+							id="monitoring-location-select"
+							value={selectedLocationId}
+							onchange={handleLocationChange}
+						>
+							<option value="-ALL-">All Locations (Average)</option>
+							{#each sortedLocations as [id, name]}
+								<option value={id}>{displayMode === 'id' ? id : name}</option>
+							{/each}
+						</select>
+					</div>
+
+					{#if currentResult}
+						<div class="temperature-display">
+							<h2>Average Water Temperature</h2>
+							<div class="temperature-value">
+								{currentResult.average.toFixed(2)}°C
+							</div>
+						</div>
+					{/if}
 				</div>
 			{/if}
-			<div class="results-content">
-				<div class="location-selector">
-					<label for="monitoring-location-select">
-						<strong>Monitoring Location:</strong>
-					</label>
-
-					<div class="display-mode-selector">
-						<label>
-							<input type="radio" name="display-mode" value="name" bind:group={displayMode} />
-							By Name
-						</label>
-						<label>
-							<input type="radio" name="display-mode" value="id" bind:group={displayMode} />
-							By ID
-						</label>
-					</div>
-
-					<select
-						id="monitoring-location-select"
-						value={selectedLocationId}
-						onchange={handleLocationChange}
-					>
-						<option value="-ALL-">All Locations (Average)</option>
-						{#each sortedLocations as [id, name]}
-							<option value={id}>{displayMode === 'id' ? id : name}</option>
-						{/each}
-					</select>
-				</div>
-
-				{#if currentResult}
-					<div class="temperature-display">
-						<h2>Average Water Temperature</h2>
-						<div class="temperature-value">
-							{currentResult.average.toFixed(2)}°C
-						</div>
-					</div>
-				{/if}
-			</div>
 		</div>
 	{/if}
 </div>
@@ -352,26 +353,15 @@
 		color: #c62828;
 	}
 
-	.processing-message {
-		margin: 1.5rem 0;
-		padding: 1rem;
-		background-color: #e3f2fd;
-		border-left: 4px solid #2196f3;
-		border-radius: 4px;
-		display: flex;
-		align-items: flex-start;
-		gap: 1rem;
-	}
-
 	.spinner {
-		width: 40px;
-		height: 40px;
+		width: 48px;
+		height: 48px;
 		flex-shrink: 0;
 		animation: spin 1s linear infinite;
 	}
 
 	.spinner-ring {
-		stroke: #2196f3;
+		stroke: #667eea;
 		stroke-linecap: round;
 		stroke-dasharray: 90, 150;
 		stroke-dashoffset: 0;
@@ -399,20 +389,6 @@
 		}
 	}
 
-	.processing-text {
-		flex: 1;
-	}
-
-	.processing-message p {
-		margin: 0.25rem 0;
-		color: #1565c0;
-	}
-
-	.file-size {
-		font-size: 0.9rem;
-		color: #1976d2;
-	}
-
 	.results-section {
 		margin: 2rem 0;
 	}
@@ -422,6 +398,14 @@
 		padding: 1rem;
 		background-color: #f5f5f5;
 		border-radius: 8px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.file-info-content {
+		flex: 1;
 	}
 
 	.file-info-header h2 {
@@ -439,6 +423,13 @@
 		margin: 0;
 		font-size: 0.9rem;
 		color: #666;
+	}
+
+	.processing-status {
+		margin: 0.5rem 0 0 0;
+		font-size: 0.9rem;
+		color: #667eea;
+		font-weight: 500;
 	}
 
 	.results-content {
