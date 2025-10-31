@@ -199,6 +199,11 @@
 
 	{#if parseResults && !isProcessing}
 		<div class="results-section">
+			{#if selectedFile}
+				<div class="file-info-header">
+					<h2>Results for: <span class="filename">{selectedFile.name}</span></h2>
+				</div>
+			{/if}
 			<div class="results-content">
 				<div class="location-selector">
 					<label for="monitoring-location-select">
@@ -393,6 +398,24 @@
 
 	.results-section {
 		margin: 2rem 0;
+	}
+
+	.file-info-header {
+		margin-bottom: 1.5rem;
+		padding: 1rem;
+		background-color: #f5f5f5;
+		border-radius: 8px;
+	}
+
+	.file-info-header h2 {
+		margin: 0;
+		font-size: 1.25rem;
+		color: #333;
+	}
+
+	.filename {
+		color: #667eea;
+		font-weight: 600;
 	}
 
 	.results-content {
