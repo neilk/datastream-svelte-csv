@@ -143,6 +143,22 @@
 		const mb = kb / 1024;
 		return `${mb.toFixed(2)} MB`;
 	}
+
+	/**
+	 * Format file last modified date in ISO 8601 format with timezone
+	 */
+	function formatFileDate(timestamp: number): string {
+		const date = new Date(timestamp);
+		return new Intl.DateTimeFormat('en-CA', {
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit',
+			timeZoneName: 'short'
+		}).format(date);
+	}
 </script>
 
 <div class="water-temp-analyzer">
@@ -202,6 +218,7 @@
 			{#if selectedFile}
 				<div class="file-info-header">
 					<h2>Results for: <span class="filename">{selectedFile.name}</span></h2>
+					<p class="file-date">Last modified: {formatFileDate(selectedFile.lastModified)}</p>
 				</div>
 			{/if}
 			<div class="results-content">
@@ -408,7 +425,7 @@
 	}
 
 	.file-info-header h2 {
-		margin: 0;
+		margin: 0 0 0.5rem 0;
 		font-size: 1.25rem;
 		color: #333;
 	}
@@ -416,6 +433,12 @@
 	.filename {
 		color: #667eea;
 		font-weight: 600;
+	}
+
+	.file-date {
+		margin: 0;
+		font-size: 0.9rem;
+		color: #666;
 	}
 
 	.results-content {
