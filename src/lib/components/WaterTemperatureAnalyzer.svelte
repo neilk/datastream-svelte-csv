@@ -8,7 +8,7 @@
 	 *
 	 */
 
-	import { parseCsv } from '$lib/CsvParserWeb';
+	import { parseCsv, CancellationError, type CsvParseOperation } from '$lib/CsvParserWeb';
 	import type { ParseResults } from '$lib/CsvParser';
 	import type { LocationResult } from '$lib/RecordDataAccumulator';
 
@@ -27,6 +27,7 @@
 	let selectedLocationId = $state('-ALL-');
 	let displayMode = $state<'id' | 'name'>('name');
 	let isDragging = $state(false);
+	let currentOperation = $state<CsvParseOperation | null>(null);
 
 	// Refs
 	let fileInput: HTMLInputElement;
@@ -52,22 +53,36 @@
 	 * Process a file - common logic for both file input and drag-and-drop
 	 */
 	async function processFile(file: File) {
+		// Cancel any existing processing operation
+		if (currentOperation) {
+			currentOperation.cancel();
+		}
+
 		selectedFile = file;
 		errorMessage = null;
 		isProcessing = true;
 
 		try {
 			// Parse the CSV file (the worker will create the stream)
-			const results = await parseCsv(file);
+			const operation: CsvParseOperation = parseCsv(file);
+			currentOperation = operation;
+
+			const results = await operation.promise;
 
 			// Update state with results
 			parseResults = results;
 			selectedLocationId = '-ALL-'; // Default to showing all locations
 		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+			// Don't show error message if it was cancelled by the user
+			if (error instanceof CancellationError) {
+				// Silent cancellation - user initiated
+			} else {
+				errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+			}
 			parseResults = null;
 		} finally {
 			isProcessing = false;
+			currentOperation = null;
 		}
 	}
 
@@ -161,6 +176,16 @@
 	}
 
 	/**
+	 * Cancel the current processing operation
+	 */
+	function handleCancel() {
+		if (currentOperation) {
+			currentOperation.cancel();
+			// The processFile finally block will clean up the rest
+		}
+	}
+
+	/**
 	 * Clear the current file and reset state
 	 */
 	function handleClear() {
@@ -225,10 +250,20 @@
 					</p>
 				</div>
 				{#if isProcessing}
-					<svg class="spinner" viewBox="0 0 50 50" aria-hidden="true">
-						<circle class="spinner-ring" cx="25" cy="25" r="20" fill="none" stroke-width="5"
-						></circle>
-					</svg>
+					<div class="processing-controls">
+						<svg class="spinner" viewBox="0 0 50 50" aria-hidden="true">
+							<circle class="spinner-ring" cx="25" cy="25" r="20" fill="none" stroke-width="5"
+							></circle>
+						</svg>
+						<button
+							type="button"
+							class="cancel-button"
+							onclick={handleCancel}
+							aria-label="Cancel processing"
+						>
+							Cancel
+						</button>
+					</div>
 				{:else if parseResults}
 					<button
 						type="button"
@@ -446,6 +481,13 @@
 		color: #666;
 	}
 
+	.processing-controls {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.cancel-button,
 	.clear-button {
 		padding: 0.75rem 1.5rem;
 		background-color: #667eea;
@@ -458,10 +500,12 @@
 		transition: background-color 0.2s ease;
 	}
 
+	.cancel-button:hover,
 	.clear-button:hover {
 		background-color: #764ba2;
 	}
 
+	.cancel-button:focus,
 	.clear-button:focus {
 		outline: 2px solid #667eea;
 		outline-offset: 2px;

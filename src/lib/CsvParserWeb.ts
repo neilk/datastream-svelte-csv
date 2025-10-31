@@ -9,6 +9,24 @@ import type {
 } from './WorkerTypes.js';
 
 /**
+ * Error thrown when CSV parsing is cancelled
+ */
+export class CancellationError extends Error {
+	constructor(message = 'CSV parsing was cancelled') {
+		super(message);
+		this.name = 'CancellationError';
+	}
+}
+
+/**
+ * Result of parseCsv, containing both the promise and a cancel function
+ */
+export interface CsvParseOperation {
+	promise: Promise<ParseResults>;
+	cancel: () => void;
+}
+
+/**
  * Convert SerializableParseResults (with arrays) back to ParseResults (with Maps)
  */
 function deserializeResults(serialized: SerializableParseResults): ParseResults {
@@ -26,13 +44,16 @@ function deserializeResults(serialized: SerializableParseResults): ParseResults 
  * consuming excessive memory.
  *
  * @param file - A File object containing CSV data
- * @returns Parse results containing monitoring locations and their statistics
+ * @returns An object containing a promise for the results and a cancel function
  */
-export async function parseCsv(file: File): Promise<ParseResults> {
-	return new Promise<ParseResults>((resolve, reject) => {
+export function parseCsv(file: File): CsvParseOperation {
+	let worker: Worker | null = null;
+	let isCancelled = false;
+
+	const promise = new Promise<ParseResults>((resolve, reject) => {
 		// Create worker from the worker module
 		// Vite will handle bundling the worker correctly with ?worker suffix
-		const worker = new Worker(new URL('./CsvWebWorker.ts', import.meta.url), {
+		worker = new Worker(new URL('./CsvWebWorker.ts', import.meta.url), {
 			type: 'module'
 		});
 
@@ -43,17 +64,32 @@ export async function parseCsv(file: File): Promise<ParseResults> {
 			if (message.type === 'success') {
 				// Deserialize the results (convert arrays back to Maps)
 				const results = deserializeResults(message.results);
-				worker.terminate();
+				if (worker) {
+					worker.terminate();
+					worker = null;
+				}
 				resolve(results);
 			} else if (message.type === 'error') {
-				worker.terminate();
+				if (worker) {
+					worker.terminate();
+					worker = null;
+				}
 				reject(new Error(message.error));
+			} else if (message.type === 'cancelled') {
+				if (worker) {
+					worker.terminate();
+					worker = null;
+				}
+				reject(new CancellationError());
 			}
 		};
 
 		// Handle worker errors
 		worker.onerror = (error) => {
-			worker.terminate();
+			if (worker) {
+				worker.terminate();
+				worker = null;
+			}
 			reject(new Error(`Worker error: ${error.message}`));
 		};
 
@@ -64,4 +100,29 @@ export async function parseCsv(file: File): Promise<ParseResults> {
 		};
 		worker.postMessage(fileMessage);
 	});
+
+	const cancel = async () => {
+		console.log('received cancel');
+		if (isCancelled || !worker) {
+			return; // Already cancelled or worker doesn't exist
+		}
+
+		// Send cancel message to worker (best effort)
+		try {
+			const cancelMessage: WorkerRequestMessage = {
+				type: 'cancel'
+			};
+			worker.postMessage(cancelMessage);
+		} catch (error) {
+			// Worker might already be terminated, ignore
+		} finally {
+			// Terminate the worker immediately
+			worker.terminate();
+			worker = null;
+		}
+
+		isCancelled = true;
+	};
+
+	return { promise, cancel };
 }
