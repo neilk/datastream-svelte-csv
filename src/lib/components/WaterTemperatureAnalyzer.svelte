@@ -8,6 +8,11 @@
 	 *
 	 */
 
+	import Icon from 'svelte-awesome';
+	import trash from 'svelte-awesome/icons/trash';
+	import close from 'svelte-awesome/icons/close';
+	import upload from 'svelte-awesome/icons/upload';
+
 	import { parseCsv, CancellationError, type CsvParseOperation } from '$lib/CsvParserWeb';
 	import type { ParseResults } from '$lib/CsvParser';
 	import type { LocationResult } from '$lib/RecordDataAccumulator';
@@ -242,7 +247,9 @@
 				aria-label="CSV file upload area"
 			>
 				<p class="drop-text" aria-hidden="true">
-					Drag a CSV file here, or <button
+					<Icon data={upload} />
+					Drag a CSV file here, or
+					<button
 						type="button"
 						onclick={handleUploadClick}
 						class="upload-button"
@@ -274,7 +281,7 @@
 								onclick={handleCancel}
 								aria-label="Cancel processing"
 							>
-								Cancel
+								<Icon data={close} /> Cancel
 							</button>
 						</div>
 					{:else if fileProcessing.state === 'completed' || fileProcessing.state === 'error'}
@@ -284,7 +291,7 @@
 							onclick={handleClear}
 							aria-label="Clear file and upload a new one"
 						>
-							Clear
+							<Icon data={trash} /> Clear
 						</button>
 					{/if}
 				</div>
@@ -365,16 +372,35 @@
 		font-size: 1rem;
 	}
 
+	/* 
+	   Make the icons in buttons, etc. align correctly with inline text.
+
+	   ':global' is necessary because Svelte otherwise will optimize 
+	   these classes away. I guess it cannot see inside the Icon source?
+	*/
+	.cancel-button :global(svg),
+	.clear-button :global(svg),
+	.drop-text :global(svg) {
+		vertical-align: -0.125rem;
+		margin-right: 0.125rem;
+	}
+
 	.main-container {
 		margin: 2rem 0;
 		border: 3px solid #ccc;
 		border-radius: 12px;
 		overflow: hidden;
+		min-height: 12rem;
+		display: flex;
+		background-color: #f9f9f9;
+		flex-direction: column;
 	}
 
 	.file-input-section {
-		padding: 4rem 2rem;
-		background-color: #f9f9f9;
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		text-align: center;
 		cursor: pointer;
 	}
@@ -460,10 +486,6 @@
 			stroke-dasharray: 90, 150;
 			stroke-dashoffset: -124;
 		}
-	}
-
-	.results-section {
-		background-color: #f5f5f5;
 	}
 
 	.file-info-header {
