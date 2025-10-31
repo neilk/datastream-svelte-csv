@@ -251,12 +251,6 @@
 		</div>
 	{/if}
 
-	{#if fileProcessing?.error}
-		<div class="error-message">
-			<p><strong>Error:</strong> {fileProcessing.error}</p>
-		</div>
-	{/if}
-
 	{#if fileProcessing}
 		<div class="results-section">
 			<div class="file-info-header">
@@ -282,7 +276,7 @@
 							Cancel
 						</button>
 					</div>
-				{:else if fileProcessing.state === 'completed'}
+				{:else if fileProcessing.state === 'completed' || fileProcessing.state === 'error'}
 					<button
 						type="button"
 						class="clear-button"
@@ -332,6 +326,10 @@
 							</div>
 						</div>
 					{/if}
+				</div>
+			{:else if fileProcessing.state === 'error'}
+				<div class="error-message">
+					<p><strong>Error:</strong> {fileProcessing.error}</p>
 				</div>
 			{/if}
 		</div>
