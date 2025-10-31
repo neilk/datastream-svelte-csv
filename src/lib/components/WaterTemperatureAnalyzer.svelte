@@ -66,12 +66,7 @@
 			// Parse the CSV file (the worker will create the stream)
 			const operation: CsvParseOperation = parseCsv(file);
 			currentOperation = operation;
-
-			const results = await operation.results;
-
-			// Update state with results
-			parseResults = results;
-			selectedLocationId = '-ALL-'; // Default to showing all locations
+			parseResults = await operation.results;
 		} catch (error) {
 			// Don't show error message if it was cancelled by the user
 			if (error instanceof CancellationError) {

@@ -50,6 +50,7 @@ export function parseCsv(file: File): CsvParseOperation {
 	let worker: Worker | null = null;
 	let isCancelled = false;
 	let promiseReject: ((reason?: any) => void) | null = null;
+	let cancelTimeout: any = null;
 
 	const promise = new Promise<ParseResults>((resolve, reject) => {
 		promiseReject = reject;
@@ -80,6 +81,11 @@ export function parseCsv(file: File): CsvParseOperation {
 				promiseReject = null; // Clear reject function
 				reject(new Error(message.error));
 			} else if (message.type === 'cancelled') {
+				// Worker responded to cancellation - clear the timeout
+				if (cancelTimeout !== null) {
+					clearTimeout(cancelTimeout);
+					cancelTimeout = null;
+				}
 				if (worker) {
 					worker.terminate();
 					worker = null;
@@ -91,6 +97,11 @@ export function parseCsv(file: File): CsvParseOperation {
 
 		// Handle worker errors
 		worker.onerror = (error) => {
+			// Clear cancel timeout if it exists
+			if (cancelTimeout !== null) {
+				clearTimeout(cancelTimeout);
+				cancelTimeout = null;
+			}
 			if (worker) {
 				worker.terminate();
 				worker = null;
@@ -114,7 +125,7 @@ export function parseCsv(file: File): CsvParseOperation {
 
 		isCancelled = true;
 
-		// Send cancel message to worker (best effort)
+		// Send cancel message to worker
 		try {
 			const cancelMessage: WorkerRequestMessage = {
 				type: 'cancel'
@@ -124,17 +135,19 @@ export function parseCsv(file: File): CsvParseOperation {
 			// Worker might already be terminated, ignore
 		}
 
-		// Terminate the worker immediately
-		if (worker) {
-			worker.terminate();
-			worker = null;
-		}
+		// Give worker 500ms to respond gracefully, then force terminate
+		cancelTimeout = setTimeout(() => {
+			if (worker) {
+				worker.terminate();
+				worker = null;
+			}
 
-		// Reject the promise to unblock the UI
-		if (promiseReject) {
-			promiseReject(new CancellationError());
-			promiseReject = null;
-		}
+			// Reject the promise to unblock the UI
+			if (promiseReject) {
+				promiseReject(new CancellationError());
+				promiseReject = null;
+			}
+		}, 500);
 	};
 
 	return { results: promise, cancel };
