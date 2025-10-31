@@ -168,13 +168,15 @@
 	/**
 	 * Format file size for display
 	 */
+	const FILE_SIZE_UNITS: string[] = ['bytes', 'KB', 'MB', 'GB', 'TB'];
 	function formatFileSize(bytes: number): string {
-		const kb = bytes / 1024;
-		if (kb < 1024) {
-			return `${kb.toFixed(1)} KB`;
+		let i = 0;
+		while (bytes > 1024 && i < FILE_SIZE_UNITS.length) {
+			bytes /= 1024;
+			i++;
 		}
-		const mb = kb / 1024;
-		return `${mb.toFixed(2)} MB`;
+		const abbreviation = FILE_SIZE_UNITS[i];
+		return `${bytes.toFixed(i > 0 ? 2 : 0)} ${abbreviation}`;
 	}
 
 	/**
