@@ -443,8 +443,11 @@
 	}
 
 	.error-message {
+		flex: 1;
 		padding: 1rem;
 		background-color: #ffebee;
+		display: flex;
+		align-items: flex-start;
 	}
 
 	.error-message p {
@@ -546,6 +549,12 @@
 	.clear-button:focus {
 		outline: 2px solid #667eea;
 		outline-offset: 2px;
+	}
+
+	.results-section {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
 	}
 
 	.results-content {
