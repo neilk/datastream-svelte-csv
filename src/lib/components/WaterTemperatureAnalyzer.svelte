@@ -230,112 +230,114 @@
 		style="display: none;"
 	/>
 
-	{#if !fileProcessing}
-		<div
-			class="file-input-section"
-			class:dragging={isDragging}
-			ondragover={handleDragOver}
-			ondragleave={handleDragLeave}
-			ondrop={handleDrop}
-			role="region"
-			aria-label="CSV file upload area"
-		>
-			<p class="drop-text" aria-hidden="true">
-				Drag a CSV file here, or <button
-					type="button"
-					onclick={handleUploadClick}
-					class="upload-button"
-					aria-label="Select CSV file to upload">click to upload</button
-				>
-			</p>
-		</div>
-	{/if}
+	<div class="main-container">
+		{#if !fileProcessing}
+			<div
+				class="file-input-section"
+				class:dragging={isDragging}
+				ondragover={handleDragOver}
+				ondragleave={handleDragLeave}
+				ondrop={handleDrop}
+				role="region"
+				aria-label="CSV file upload area"
+			>
+				<p class="drop-text" aria-hidden="true">
+					Drag a CSV file here, or <button
+						type="button"
+						onclick={handleUploadClick}
+						class="upload-button"
+						aria-label="Select CSV file to upload">click to upload</button
+					>
+				</p>
+			</div>
+		{/if}
 
-	{#if fileProcessing}
-		<div class="results-section">
-			<div class="file-info-header">
-				<div class="file-info-content">
-					<h2><span class="filename">{fileProcessing.file.name}</span></h2>
-					<p class="file-date">
-						Last modified: {formatFileDate(fileProcessing.file.lastModified)}
-						• Size: {formatFileSize(fileProcessing.file.size)}
-					</p>
-				</div>
-				{#if fileProcessing.state === 'processing'}
-					<div class="processing-controls">
-						<svg class="spinner" viewBox="0 0 50 50" aria-hidden="true">
-							<circle class="spinner-ring" cx="25" cy="25" r="20" fill="none" stroke-width="5"
-							></circle>
-						</svg>
+		{#if fileProcessing}
+			<div class="results-section">
+				<div class="file-info-header">
+					<div class="file-info-content">
+						<h2><span class="filename">{fileProcessing.file.name}</span></h2>
+						<p class="file-date">
+							Last modified: {formatFileDate(fileProcessing.file.lastModified)}
+							• Size: {formatFileSize(fileProcessing.file.size)}
+						</p>
+					</div>
+					{#if fileProcessing.state === 'processing'}
+						<div class="processing-controls">
+							<svg class="spinner" viewBox="0 0 50 50" aria-hidden="true">
+								<circle class="spinner-ring" cx="25" cy="25" r="20" fill="none" stroke-width="5"
+								></circle>
+							</svg>
+							<button
+								type="button"
+								class="cancel-button"
+								onclick={handleCancel}
+								aria-label="Cancel processing"
+							>
+								Cancel
+							</button>
+						</div>
+					{:else if fileProcessing.state === 'completed' || fileProcessing.state === 'error'}
 						<button
 							type="button"
-							class="cancel-button"
-							onclick={handleCancel}
-							aria-label="Cancel processing"
+							class="clear-button"
+							onclick={handleClear}
+							aria-label="Clear file and upload a new one"
 						>
-							Cancel
+							Clear
 						</button>
-					</div>
-				{:else if fileProcessing.state === 'completed' || fileProcessing.state === 'error'}
-					<button
-						type="button"
-						class="clear-button"
-						onclick={handleClear}
-						aria-label="Clear file and upload a new one"
-					>
-						Clear
-					</button>
-				{/if}
-			</div>
-
-			{#if fileProcessing.state === 'completed' && fileProcessing.results}
-				<div class="results-content">
-					<div class="location-selector">
-						<div class="location-label-row">
-							<label for="monitoring-location-select">
-								<strong>Monitoring Location:</strong>
-							</label>
-
-							<span class="display-mode-selector">
-								<label>
-									<input type="radio" name="display-mode" value="name" bind:group={displayMode} />
-									By Name
-								</label>
-								<label>
-									<input type="radio" name="display-mode" value="id" bind:group={displayMode} />
-									By ID
-								</label>
-							</span>
-						</div>
-
-						<select
-							id="monitoring-location-select"
-							value={selectedLocationId}
-							onchange={handleLocationChange}
-						>
-							<option value="-ALL-">All Locations (Average)</option>
-							{#each sortedLocations as [id, name]}
-								<option value={id}>{displayMode === 'id' ? id : name}</option>
-							{/each}
-						</select>
-					</div>
-
-					{#if currentResult}
-						<div class="temperature-display">
-							<h2>Average Water Temperature</h2>
-							<div class="temperature-value">
-								{currentResult.average.toFixed(2)}°C
-							</div>
-						</div>
 					{/if}
 				</div>
-			{:else if fileProcessing.state === 'error'}
-				<div class="error-message">
-					<p><strong>Error:</strong> {fileProcessing.error}</p>
-				</div>
-			{/if}
-		</div>
-	{/if}
+
+				{#if fileProcessing.state === 'completed' && fileProcessing.results}
+					<div class="results-content">
+						<div class="location-selector">
+							<div class="location-label-row">
+								<label for="monitoring-location-select">
+									<strong>Monitoring Location:</strong>
+								</label>
+
+								<span class="display-mode-selector">
+									<label>
+										<input type="radio" name="display-mode" value="name" bind:group={displayMode} />
+										By Name
+									</label>
+									<label>
+										<input type="radio" name="display-mode" value="id" bind:group={displayMode} />
+										By ID
+									</label>
+								</span>
+							</div>
+
+							<select
+								id="monitoring-location-select"
+								value={selectedLocationId}
+								onchange={handleLocationChange}
+							>
+								<option value="-ALL-">All Locations (Average)</option>
+								{#each sortedLocations as [id, name]}
+									<option value={id}>{displayMode === 'id' ? id : name}</option>
+								{/each}
+							</select>
+						</div>
+
+						{#if currentResult}
+							<div class="temperature-display">
+								<h2>Average Water Temperature</h2>
+								<div class="temperature-value">
+									{currentResult.average.toFixed(2)}°C
+								</div>
+							</div>
+						{/if}
+					</div>
+				{:else if fileProcessing.state === 'error'}
+					<div class="error-message">
+						<p><strong>Error:</strong> {fileProcessing.error}</p>
+					</div>
+				{/if}
+			</div>
+		{/if}
+	</div>
 </div>
 
 <style>
@@ -363,11 +365,16 @@
 		font-size: 1rem;
 	}
 
-	.file-input-section {
+	.main-container {
 		margin: 2rem 0;
-		padding: 4rem 2rem;
 		border: 3px solid #ccc;
 		border-radius: 12px;
+		overflow: hidden;
+		transition: height 0.3s ease-in-out;
+	}
+
+	.file-input-section {
+		padding: 4rem 2rem;
 		background-color: #f9f9f9;
 		text-align: center;
 		cursor: pointer;
@@ -375,14 +382,11 @@
 	}
 
 	.file-input-section:hover {
-		border-color: #667eea;
 		background-color: #f0f4ff;
 	}
 
 	.file-input-section.dragging {
-		border-color: #667eea;
 		background-color: #e3f2fd;
-		border-style: solid;
 	}
 
 	.drop-text {
@@ -461,11 +465,7 @@
 	}
 
 	.results-section {
-		margin: 2rem 0;
 		background-color: #f5f5f5;
-		border-radius: 8px;
-		border: 3px solid #ccc;
-		overflow: hidden;
 	}
 
 	.file-info-header {
