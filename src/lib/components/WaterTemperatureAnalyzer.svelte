@@ -159,38 +159,54 @@
 			timeZoneName: 'short'
 		}).format(date);
 	}
+
+	/**
+	 * Clear the current file and reset state
+	 */
+	function handleClear() {
+		selectedFile = null;
+		parseResults = null;
+		errorMessage = null;
+		selectedLocationId = '-ALL-';
+		if (fileInput) {
+			fileInput.value = '';
+		}
+	}
 </script>
 
 <div class="water-temp-analyzer">
 	<h1>{title}</h1>
 
-	<div
-		class="file-input-section"
-		class:dragging={isDragging}
-		ondragover={handleDragOver}
-		ondragleave={handleDragLeave}
-		ondrop={handleDrop}
-		role="region"
-		aria-label="CSV file upload area"
-	>
-		<input
-			bind:this={fileInput}
-			id="csv-file-input"
-			type="file"
-			accept=".csv"
-			onchange={handleFileChange}
-			aria-label="Upload CSV file"
-			style="display: none;"
-		/>
-		<p class="drop-text" aria-hidden="true">
-			Drag a CSV file here, or <button
-				type="button"
-				onclick={handleUploadClick}
-				class="upload-button"
-				aria-label="Select CSV file to upload">click to upload</button
-			>
-		</p>
-	</div>
+	<input
+		bind:this={fileInput}
+		id="csv-file-input"
+		type="file"
+		accept=".csv"
+		onchange={handleFileChange}
+		aria-label="Upload CSV file"
+		style="display: none;"
+	/>
+
+	{#if !selectedFile}
+		<div
+			class="file-input-section"
+			class:dragging={isDragging}
+			ondragover={handleDragOver}
+			ondragleave={handleDragLeave}
+			ondrop={handleDrop}
+			role="region"
+			aria-label="CSV file upload area"
+		>
+			<p class="drop-text" aria-hidden="true">
+				Drag a CSV file here, or <button
+					type="button"
+					onclick={handleUploadClick}
+					class="upload-button"
+					aria-label="Select CSV file to upload">click to upload</button
+				>
+			</p>
+		</div>
+	{/if}
 
 	{#if errorMessage}
 		<div class="error-message">
@@ -204,19 +220,24 @@
 				<div class="file-info-content">
 					<h2><span class="filename">{selectedFile.name}</span></h2>
 					<p class="file-date">
-						Last modified: {formatFileDate(selectedFile.lastModified)} • Size: {formatFileSize(
-							selectedFile.size
-						)}
+						Last modified: {formatFileDate(selectedFile.lastModified)}
+						• Size: {formatFileSize(selectedFile.size)}
 					</p>
-					{#if isProcessing}
-						<p class="processing-status">Processing...</p>
-					{/if}
 				</div>
 				{#if isProcessing}
 					<svg class="spinner" viewBox="0 0 50 50" aria-hidden="true">
 						<circle class="spinner-ring" cx="25" cy="25" r="20" fill="none" stroke-width="5"
 						></circle>
 					</svg>
+				{:else if parseResults}
+					<button
+						type="button"
+						class="clear-button"
+						onclick={handleClear}
+						aria-label="Clear file and upload a new one"
+					>
+						Clear
+					</button>
 				{/if}
 			</div>
 
@@ -425,11 +446,25 @@
 		color: #666;
 	}
 
-	.processing-status {
-		margin: 0.5rem 0 0 0;
-		font-size: 0.9rem;
-		color: #667eea;
-		font-weight: 500;
+	.clear-button {
+		padding: 0.75rem 1.5rem;
+		background-color: #667eea;
+		color: white;
+		border: none;
+		border-radius: 6px;
+		font-size: 1rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: background-color 0.2s ease;
+	}
+
+	.clear-button:hover {
+		background-color: #764ba2;
+	}
+
+	.clear-button:focus {
+		outline: 2px solid #667eea;
+		outline-offset: 2px;
 	}
 
 	.results-content {
