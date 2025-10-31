@@ -8,7 +8,8 @@
 	 *
 	 */
 
-	import { parseCsv, type ParseResults } from '$lib/CsvParserWeb';
+	import { parseCsv } from '$lib/CsvParserWeb';
+	import type { ParseResults } from '$lib/CsvParser';
 	import type { LocationResult } from '$lib/RecordDataAccumulator';
 
 	// Props for customization
@@ -19,20 +20,20 @@
 	const { title = 'Water Temperature Analysis' }: Props = $props();
 
 	// State
-	let selectedFile: File | null = $state(null);
+	let selectedFile = $state<File | null>(null);
 	let isProcessing = $state(false);
-	let errorMessage: string | null = $state(null);
-	let parseResults: ParseResults | null = $state(null);
-	let selectedLocationId: string = $state('-ALL-');
-	let displayMode: 'id' | 'name' = $state('name');
+	let errorMessage = $state<string | null>(null);
+	let parseResults = $state<ParseResults | null>(null);
+	let selectedLocationId = $state('-ALL-');
+	let displayMode = $state<'id' | 'name'>('name');
 	let isDragging = $state(false);
 
 	// Refs
 	let fileInput: HTMLInputElement;
 
 	// Derived state
-	let monitoringLocations = $derived(
-		parseResults?.monitoringLocations || new Map<string, string>()
+	let monitoringLocations = $derived<Map<string, string>>(
+		parseResults?.monitoringLocations ?? new Map<string, string>()
 	);
 	let sortedLocations = $derived.by(() => {
 		const entries = [...monitoringLocations.entries()];
@@ -42,9 +43,9 @@
 			return aLabel.localeCompare(bLabel);
 		});
 	});
-	let currentResult = $derived.by(() => {
+	let currentResult = $derived.by((): LocationResult | null => {
 		if (!parseResults) return null;
-		return parseResults.monitoringLocationResults.get(selectedLocationId) || null;
+		return parseResults.monitoringLocationResults.get(selectedLocationId) ?? null;
 	});
 
 	/**
