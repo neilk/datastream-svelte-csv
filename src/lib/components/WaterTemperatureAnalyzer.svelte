@@ -370,7 +370,6 @@
 		border: 3px solid #ccc;
 		border-radius: 12px;
 		overflow: hidden;
-		transition: height 0.3s ease-in-out;
 	}
 
 	.file-input-section {
@@ -378,7 +377,6 @@
 		background-color: #f9f9f9;
 		text-align: center;
 		cursor: pointer;
-		transition: all 0.3s ease;
 	}
 
 	.file-input-section:hover {
