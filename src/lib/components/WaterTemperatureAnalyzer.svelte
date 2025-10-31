@@ -12,6 +12,17 @@
 	import type { ParseResults } from '$lib/CsvParser';
 	import type { LocationResult } from '$lib/RecordDataAccumulator';
 
+	/**
+	 * Encapsulates a file and its processing lifecycle
+	 */
+	type FileProcessing = {
+		file: File;
+		state: 'processing' | 'completed' | 'error';
+		operation: CsvParseOperation;
+		results?: ParseResults;
+		error?: string;
+	};
+
 	// Props for customization
 	interface Props {
 		title?: string;
@@ -20,21 +31,17 @@
 	const { title = 'Water Temperature Analysis' }: Props = $props();
 
 	// State
-	let selectedFile = $state<File | null>(null);
-	let isProcessing = $state(false);
-	let errorMessage = $state<string | null>(null);
-	let parseResults = $state<ParseResults | null>(null);
+	let fileProcessing = $state<FileProcessing | null>(null);
 	let selectedLocationId = $state('-ALL-');
 	let displayMode = $state<'id' | 'name'>('name');
 	let isDragging = $state(false);
-	let currentOperation = $state<CsvParseOperation | null>(null);
 
 	// Refs
 	let fileInput: HTMLInputElement;
 
 	// Derived state
 	let monitoringLocations = $derived<Map<string, string>>(
-		parseResults?.monitoringLocations ?? new Map<string, string>()
+		fileProcessing?.results?.monitoringLocations ?? new Map<string, string>()
 	);
 	let sortedLocations = $derived.by(() => {
 		const entries = [...monitoringLocations.entries()];
@@ -45,8 +52,8 @@
 		});
 	});
 	let currentResult = $derived.by((): LocationResult | null => {
-		if (!parseResults) return null;
-		return parseResults.monitoringLocationResults.get(selectedLocationId) ?? null;
+		if (!fileProcessing?.results) return null;
+		return fileProcessing.results.monitoringLocationResults.get(selectedLocationId) ?? null;
 	});
 
 	/**
@@ -54,34 +61,48 @@
 	 */
 	async function processFile(file: File) {
 		// Cancel any existing processing operation
-		if (currentOperation) {
-			currentOperation.cancel();
+		if (fileProcessing) {
+			fileProcessing.operation.cancel();
 		}
 
-		selectedFile = file;
-		errorMessage = null;
-		isProcessing = true;
+		// Create new file processing with 'processing' state
+		const operation = parseCsv(file);
+		fileProcessing = {
+			file,
+			state: 'processing',
+			operation
+		};
 
 		try {
-			// Parse the CSV file (the worker will create the stream)
-			const operation: CsvParseOperation = parseCsv(file);
-			currentOperation = operation;
-			parseResults = await operation.results;
+			// Wait for results
+			const results = await operation.results;
+
+			// Update to completed state
+			fileProcessing = {
+				...fileProcessing,
+				state: 'completed',
+				results
+			};
+
+			// Reset to show all locations by default
+			selectedLocationId = '-ALL-';
 		} catch (error) {
 			// Don't show error message if it was cancelled by the user
 			if (error instanceof CancellationError) {
 				// Silent cancellation - user initiated - reset to initial state
-				selectedFile = null;
+				fileProcessing = null;
 				if (fileInput) {
 					fileInput.value = '';
 				}
 			} else {
-				errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+				// Error state - keep file but show error
+				const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+				fileProcessing = {
+					...fileProcessing,
+					state: 'error',
+					error: errorMessage
+				};
 			}
-			parseResults = null;
-		} finally {
-			isProcessing = false;
-			currentOperation = null;
 		}
 	}
 
@@ -93,9 +114,7 @@
 		const file = target.files?.[0] || null;
 
 		if (!file) {
-			selectedFile = null;
-			parseResults = null;
-			errorMessage = null;
+			fileProcessing = null;
 			return;
 		}
 
@@ -178,9 +197,9 @@
 	 * Cancel the current processing operation
 	 */
 	function handleCancel() {
-		if (currentOperation) {
-			currentOperation.cancel();
-			// The processFile finally block will clean up the rest
+		if (fileProcessing) {
+			fileProcessing.operation.cancel();
+			// The processFile catch block will set fileProcessing to null
 		}
 	}
 
@@ -188,9 +207,7 @@
 	 * Clear the current file and reset state
 	 */
 	function handleClear() {
-		selectedFile = null;
-		parseResults = null;
-		errorMessage = null;
+		fileProcessing = null;
 		selectedLocationId = '-ALL-';
 		if (fileInput) {
 			fileInput.value = '';
@@ -211,7 +228,7 @@
 		style="display: none;"
 	/>
 
-	{#if !selectedFile}
+	{#if !fileProcessing}
 		<div
 			class="file-input-section"
 			class:dragging={isDragging}
@@ -232,23 +249,23 @@
 		</div>
 	{/if}
 
-	{#if errorMessage}
+	{#if fileProcessing?.error}
 		<div class="error-message">
-			<p><strong>Error:</strong> {errorMessage}</p>
+			<p><strong>Error:</strong> {fileProcessing.error}</p>
 		</div>
 	{/if}
 
-	{#if selectedFile}
+	{#if fileProcessing}
 		<div class="results-section">
 			<div class="file-info-header">
 				<div class="file-info-content">
-					<h2><span class="filename">{selectedFile.name}</span></h2>
+					<h2><span class="filename">{fileProcessing.file.name}</span></h2>
 					<p class="file-date">
-						Last modified: {formatFileDate(selectedFile.lastModified)}
-						• Size: {formatFileSize(selectedFile.size)}
+						Last modified: {formatFileDate(fileProcessing.file.lastModified)}
+						• Size: {formatFileSize(fileProcessing.file.size)}
 					</p>
 				</div>
-				{#if isProcessing}
+				{#if fileProcessing.state === 'processing'}
 					<div class="processing-controls">
 						<svg class="spinner" viewBox="0 0 50 50" aria-hidden="true">
 							<circle class="spinner-ring" cx="25" cy="25" r="20" fill="none" stroke-width="5"
@@ -263,7 +280,7 @@
 							Cancel
 						</button>
 					</div>
-				{:else if parseResults}
+				{:else if fileProcessing.state === 'completed'}
 					<button
 						type="button"
 						class="clear-button"
@@ -275,7 +292,7 @@
 				{/if}
 			</div>
 
-			{#if parseResults && !isProcessing}
+			{#if fileProcessing.state === 'completed' && fileProcessing.results}
 				<div class="results-content">
 					<div class="location-selector">
 						<label for="monitoring-location-select">
