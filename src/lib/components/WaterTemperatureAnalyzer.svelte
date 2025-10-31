@@ -8,8 +8,25 @@
 	 *
 	 */
 
-	import { parseCsv, type ParseResults } from '$lib/CsvParserWeb';
+	import Icon from 'svelte-awesome';
+	import trash from 'svelte-awesome/icons/trash';
+	import close from 'svelte-awesome/icons/close';
+	import upload from 'svelte-awesome/icons/upload';
+
+	import { parseCsv, CancellationError, type CsvParseOperation } from '$lib/CsvParserWeb';
+	import type { ParseResults } from '$lib/CsvParser';
 	import type { LocationResult } from '$lib/RecordDataAccumulator';
+
+	/**
+	 * Encapsulates a file and its processing lifecycle
+	 */
+	type FileProcessing = {
+		file: File;
+		state: 'processing' | 'completed' | 'error';
+		operation: CsvParseOperation;
+		results?: ParseResults;
+		error?: string;
+	};
 
 	// Props for customization
 	interface Props {
@@ -19,20 +36,17 @@
 	const { title = 'Water Temperature Analysis' }: Props = $props();
 
 	// State
-	let selectedFile: File | null = $state(null);
-	let isProcessing = $state(false);
-	let errorMessage: string | null = $state(null);
-	let parseResults: ParseResults | null = $state(null);
-	let selectedLocationId: string = $state('-ALL-');
-	let displayMode: 'id' | 'name' = $state('name');
+	let fileProcessing = $state<FileProcessing | null>(null);
+	let selectedLocationId = $state('-ALL-');
+	let displayMode = $state<'id' | 'name'>('name');
 	let isDragging = $state(false);
 
 	// Refs
 	let fileInput: HTMLInputElement;
 
 	// Derived state
-	let monitoringLocations = $derived(
-		parseResults?.monitoringLocations || new Map<string, string>()
+	let monitoringLocations = $derived<Map<string, string>>(
+		fileProcessing?.results?.monitoringLocations ?? new Map<string, string>()
 	);
 	let sortedLocations = $derived.by(() => {
 		const entries = [...monitoringLocations.entries()];
@@ -42,31 +56,58 @@
 			return aLabel.localeCompare(bLabel);
 		});
 	});
-	let currentResult = $derived.by(() => {
-		if (!parseResults) return null;
-		return parseResults.monitoringLocationResults.get(selectedLocationId) || null;
+	let currentResult = $derived.by((): LocationResult | null => {
+		if (!fileProcessing?.results) return null;
+		return fileProcessing.results.monitoringLocationResults.get(selectedLocationId) ?? null;
 	});
 
 	/**
 	 * Process a file - common logic for both file input and drag-and-drop
 	 */
 	async function processFile(file: File) {
-		selectedFile = file;
-		errorMessage = null;
-		isProcessing = true;
+		// Cancel any existing processing operation
+		if (fileProcessing) {
+			fileProcessing.operation.cancel();
+		}
+
+		// Create new file processing with 'processing' state
+		const operation = parseCsv(file);
+		fileProcessing = {
+			file,
+			state: 'processing',
+			operation
+		};
 
 		try {
-			// Parse the CSV file (the worker will create the stream)
-			const results = await parseCsv(file);
+			// Wait for results
+			const results = await operation.results;
 
-			// Update state with results
-			parseResults = results;
-			selectedLocationId = '-ALL-'; // Default to showing all locations
+			// Update to completed state
+			fileProcessing = {
+				...fileProcessing,
+				state: 'completed',
+				results
+			};
+
+			// Reset to show all locations by default
+			selectedLocationId = '-ALL-';
 		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-			parseResults = null;
-		} finally {
-			isProcessing = false;
+			// Don't show error message if it was cancelled by the user
+			if (error instanceof CancellationError) {
+				// Silent cancellation - user initiated - reset to initial state
+				fileProcessing = null;
+				if (fileInput) {
+					fileInput.value = '';
+				}
+			} else {
+				// Error state - keep file but show error
+				const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+				fileProcessing = {
+					...fileProcessing,
+					state: 'error',
+					error: errorMessage
+				};
+			}
 		}
 	}
 
@@ -78,9 +119,7 @@
 		const file = target.files?.[0] || null;
 
 		if (!file) {
-			selectedFile = null;
-			parseResults = null;
-			errorMessage = null;
+			fileProcessing = null;
 			return;
 		}
 
@@ -134,110 +173,178 @@
 	/**
 	 * Format file size for display
 	 */
+	const FILE_SIZE_UNITS: string[] = ['bytes', 'KB', 'MB', 'GB', 'TB'];
 	function formatFileSize(bytes: number): string {
-		const kb = bytes / 1024;
-		if (kb < 1024) {
-			return `${kb.toFixed(1)} KB`;
+		let i = 0;
+		while (bytes > 1024 && i < FILE_SIZE_UNITS.length) {
+			bytes /= 1024;
+			i++;
 		}
-		const mb = kb / 1024;
-		return `${mb.toFixed(2)} MB`;
+		const abbreviation = FILE_SIZE_UNITS[i];
+		return `${bytes.toFixed(i > 0 ? 2 : 0)} ${abbreviation}`;
+	}
+
+	/**
+	 * Format file last modified date in ISO 8601 format with timezone
+	 */
+	function formatFileDate(timestamp: number): string {
+		const date = new Date(timestamp);
+		return new Intl.DateTimeFormat('en-CA', {
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit',
+			second: '2-digit',
+			timeZoneName: 'short'
+		}).format(date);
+	}
+
+	/**
+	 * Cancel the current processing operation
+	 */
+	function handleCancel() {
+		if (fileProcessing) {
+			fileProcessing.operation.cancel();
+			// The processFile catch block will set fileProcessing to null
+		}
+	}
+
+	/**
+	 * Clear the current file and reset state
+	 */
+	function handleClear() {
+		fileProcessing = null;
+		selectedLocationId = '-ALL-';
+		if (fileInput) {
+			fileInput.value = '';
+		}
 	}
 </script>
 
 <div class="water-temp-analyzer">
 	<h1>{title}</h1>
 
-	<div
-		class="file-input-section"
-		class:dragging={isDragging}
-		ondragover={handleDragOver}
-		ondragleave={handleDragLeave}
-		ondrop={handleDrop}
-		role="region"
-		aria-label="CSV file upload area"
-	>
-		<input
-			bind:this={fileInput}
-			id="csv-file-input"
-			type="file"
-			accept=".csv"
-			onchange={handleFileChange}
-			aria-label="Upload CSV file"
-			style="display: none;"
-		/>
-		<p class="drop-text" aria-hidden="true">
-			Drag a CSV file here, or <button
-				type="button"
-				onclick={handleUploadClick}
-				class="upload-button"
-				aria-label="Select CSV file to upload">click to upload</button
+	<input
+		bind:this={fileInput}
+		id="csv-file-input"
+		type="file"
+		accept=".csv"
+		onchange={handleFileChange}
+		aria-label="Upload CSV file"
+		style="display: none;"
+	/>
+
+	<div class="main-container">
+		{#if !fileProcessing}
+			<div
+				class="file-input-section"
+				class:dragging={isDragging}
+				ondragover={handleDragOver}
+				ondragleave={handleDragLeave}
+				ondrop={handleDrop}
+				role="region"
+				aria-label="CSV file upload area"
 			>
-		</p>
-	</div>
-
-	{#if errorMessage}
-		<div class="error-message">
-			<p><strong>Error:</strong> {errorMessage}</p>
-		</div>
-	{/if}
-
-	{#if isProcessing}
-		<div class="processing-message">
-			<svg class="spinner" viewBox="0 0 50 50" aria-hidden="true">
-				<circle class="spinner-ring" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
-			</svg>
-			<div class="processing-text">
-				<p>Processing file: <strong>{selectedFile?.name}</strong></p>
-				{#if selectedFile}
-					<p class="file-size">Size: {formatFileSize(selectedFile.size)}</p>
-				{/if}
-				<p>Please wait...</p>
-			</div>
-		</div>
-	{/if}
-
-	{#if parseResults && !isProcessing}
-		<div class="results-section">
-			<div class="results-content">
-				<div class="location-selector">
-					<label for="monitoring-location-select">
-						<strong>Monitoring Location:</strong>
-					</label>
-
-					<div class="display-mode-selector">
-						<label>
-							<input type="radio" name="display-mode" value="name" bind:group={displayMode} />
-							By Name
-						</label>
-						<label>
-							<input type="radio" name="display-mode" value="id" bind:group={displayMode} />
-							By ID
-						</label>
-					</div>
-
-					<select
-						id="monitoring-location-select"
-						value={selectedLocationId}
-						onchange={handleLocationChange}
+				<p class="drop-text" aria-hidden="true">
+					<Icon data={upload} />
+					Drag a CSV file here, or
+					<button
+						type="button"
+						onclick={handleUploadClick}
+						class="upload-button"
+						aria-label="Select CSV file to upload">click to upload</button
 					>
-						<option value="-ALL-">All Locations (Average)</option>
-						{#each sortedLocations as [id, name]}
-							<option value={id}>{displayMode === 'id' ? id : name}</option>
-						{/each}
-					</select>
+				</p>
+			</div>
+		{/if}
+
+		{#if fileProcessing}
+			<div class="results-section">
+				<div class="file-info-header">
+					<div class="file-info-content">
+						<h2><span class="filename">{fileProcessing.file.name}</span></h2>
+						<p class="file-date">
+							Last modified: {formatFileDate(fileProcessing.file.lastModified)}
+							• Size: {formatFileSize(fileProcessing.file.size)}
+						</p>
+					</div>
+					{#if fileProcessing.state === 'processing'}
+						<div class="processing-controls">
+							<svg class="spinner" viewBox="0 0 50 50" aria-hidden="true">
+								<circle class="spinner-ring" cx="25" cy="25" r="20" fill="none" stroke-width="5"
+								></circle>
+							</svg>
+							<button
+								type="button"
+								class="cancel-button"
+								onclick={handleCancel}
+								aria-label="Cancel processing"
+							>
+								<Icon data={close} /> Cancel
+							</button>
+						</div>
+					{:else if fileProcessing.state === 'completed' || fileProcessing.state === 'error'}
+						<button
+							type="button"
+							class="clear-button"
+							onclick={handleClear}
+							aria-label="Clear file and upload a new one"
+						>
+							<Icon data={trash} /> Clear
+						</button>
+					{/if}
 				</div>
 
-				{#if currentResult}
-					<div class="temperature-display">
-						<h2>Average Water Temperature</h2>
-						<div class="temperature-value">
-							{currentResult.average.toFixed(2)}°C
+				{#if fileProcessing.state === 'completed' && fileProcessing.results}
+					<div class="results-content">
+						<div class="location-selector">
+							<div class="location-label-row">
+								<label for="monitoring-location-select">
+									<strong>Monitoring Location:</strong>
+								</label>
+
+								<span class="display-mode-selector">
+									<label>
+										<input type="radio" name="display-mode" value="name" bind:group={displayMode} />
+										By Name
+									</label>
+									<label>
+										<input type="radio" name="display-mode" value="id" bind:group={displayMode} />
+										By ID
+									</label>
+								</span>
+							</div>
+
+							<select
+								id="monitoring-location-select"
+								value={selectedLocationId}
+								onchange={handleLocationChange}
+							>
+								<option value="-ALL-">All Locations (Average)</option>
+								{#each sortedLocations as [id, name]}
+									<option value={id}>{displayMode === 'id' ? id : name}</option>
+								{/each}
+							</select>
 						</div>
+
+						{#if currentResult}
+							<div class="temperature-display">
+								<h2>Average Water Temperature</h2>
+								<div class="temperature-value">
+									{currentResult.average.toFixed(2)}°C
+								</div>
+							</div>
+						{/if}
+					</div>
+				{:else if fileProcessing.state === 'error'}
+					<div class="error-message">
+						<p><strong>Error:</strong> {fileProcessing.error}</p>
 					</div>
 				{/if}
 			</div>
-		</div>
-	{/if}
+		{/if}
+	</div>
 </div>
 
 <style>
@@ -265,26 +372,45 @@
 		font-size: 1rem;
 	}
 
-	.file-input-section {
+	/* 
+	   Make the icons in buttons, etc. align correctly with inline text.
+
+	   ':global' is necessary because Svelte otherwise will optimize 
+	   these classes away. I guess it cannot see inside the Icon source?
+	*/
+	.cancel-button :global(svg),
+	.clear-button :global(svg),
+	.drop-text :global(svg) {
+		vertical-align: -0.125rem;
+		margin-right: 0.125rem;
+	}
+
+	.main-container {
 		margin: 2rem 0;
-		padding: 4rem 2rem;
 		border: 3px solid #ccc;
 		border-radius: 12px;
+		overflow: hidden;
+		min-height: 12rem;
+		display: flex;
 		background-color: #f9f9f9;
+		flex-direction: column;
+	}
+
+	.file-input-section {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		text-align: center;
 		cursor: pointer;
-		transition: all 0.3s ease;
 	}
 
 	.file-input-section:hover {
-		border-color: #667eea;
 		background-color: #f0f4ff;
 	}
 
 	.file-input-section.dragging {
-		border-color: #667eea;
 		background-color: #e3f2fd;
-		border-style: solid;
 	}
 
 	.drop-text {
@@ -317,11 +443,11 @@
 	}
 
 	.error-message {
-		margin: 1.5rem 0;
+		flex: 1;
 		padding: 1rem;
 		background-color: #ffebee;
-		border-left: 4px solid #f44336;
-		border-radius: 4px;
+		display: flex;
+		align-items: flex-start;
 	}
 
 	.error-message p {
@@ -329,26 +455,15 @@
 		color: #c62828;
 	}
 
-	.processing-message {
-		margin: 1.5rem 0;
-		padding: 1rem;
-		background-color: #e3f2fd;
-		border-left: 4px solid #2196f3;
-		border-radius: 4px;
-		display: flex;
-		align-items: flex-start;
-		gap: 1rem;
-	}
-
 	.spinner {
-		width: 40px;
-		height: 40px;
+		width: 48px;
+		height: 48px;
 		flex-shrink: 0;
 		animation: spin 1s linear infinite;
 	}
 
 	.spinner-ring {
-		stroke: #2196f3;
+		stroke: #667eea;
 		stroke-linecap: round;
 		stroke-dasharray: 90, 150;
 		stroke-dashoffset: 0;
@@ -376,48 +491,99 @@
 		}
 	}
 
-	.processing-text {
+	.file-info-header {
+		padding: 1rem;
+		border-bottom: 1px solid #ddd;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.file-info-content {
 		flex: 1;
 	}
 
-	.processing-message p {
-		margin: 0.25rem 0;
-		color: #1565c0;
+	.file-info-header h2 {
+		margin: 0 0 0.5rem 0;
+		font-size: 1.25rem;
+		color: #333;
 	}
 
-	.file-size {
+	.filename {
+		color: #667eea;
+		font-weight: 600;
+	}
+
+	.file-date {
+		margin: 0;
 		font-size: 0.9rem;
-		color: #1976d2;
+		color: #666;
+	}
+
+	.processing-controls {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.cancel-button,
+	.clear-button {
+		padding: 0.75rem 1.5rem;
+		background-color: #667eea;
+		color: white;
+		border: none;
+		border-radius: 6px;
+		font-size: 1rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition: background-color 0.2s ease;
+	}
+
+	.cancel-button:hover,
+	.clear-button:hover {
+		background-color: #764ba2;
+	}
+
+	.cancel-button:focus,
+	.clear-button:focus {
+		outline: 2px solid #667eea;
+		outline-offset: 2px;
 	}
 
 	.results-section {
-		margin: 2rem 0;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
 	}
 
 	.results-content {
 		display: flex;
-		gap: 2rem;
+		gap: 0;
 		align-items: flex-start;
+		padding: 1rem;
 	}
 
 	.location-selector {
-		flex: 1;
-		padding: 1rem;
-		background-color: #f5f5f5;
-		border-radius: 8px;
+		flex: 3;
+		padding: 0 1rem 0 0;
+		border-right: 1px solid #ddd;
 	}
 
-	.location-selector > label {
-		display: block;
-		margin-bottom: 0.5rem;
+	.location-label-row {
+		display: flex;
+		align-items: center;
+		gap: 2rem;
+		margin-bottom: 1rem;
+	}
+
+	.location-selector > .location-label-row > label {
 		color: #333;
 	}
 
 	.display-mode-selector {
 		display: flex;
 		gap: 1.5rem;
-		margin: 1rem 0;
-		padding: 0.5rem 0;
 	}
 
 	.display-mode-selector label {
@@ -444,11 +610,8 @@
 	}
 
 	.temperature-display {
-		flex: 1;
-		padding: 1rem;
-		background-color: #f5f5f5;
-		border: 1px solid #ddd;
-		border-radius: 8px;
+		flex: 2;
+		padding: 0 0 0 1rem;
 		color: #333;
 		text-align: left;
 	}

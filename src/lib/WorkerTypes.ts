@@ -23,10 +23,16 @@ export interface WorkerFileMessage {
 }
 
 /**
- * All possible messages sent to worker. If we set up other messages (for instance, cancelling processing)
- * we can make this a union type
+ * Message sent to worker to cancel current processing
  */
-export type WorkerRequestMessage = WorkerFileMessage;
+export interface WorkerCancelMessage {
+	type: 'cancel';
+}
+
+/**
+ * All possible messages sent to worker
+ */
+export type WorkerRequestMessage = WorkerFileMessage | WorkerCancelMessage;
 
 /**
  * Message sent from worker with results
@@ -45,6 +51,16 @@ export interface WorkerErrorMessage {
 }
 
 /**
+ * Message sent from worker when processing is cancelled
+ */
+export interface WorkerCancelledMessage {
+	type: 'cancelled';
+}
+
+/**
  * All possible messages from worker
  */
-export type WorkerResponseMessage = WorkerSuccessMessage | WorkerErrorMessage;
+export type WorkerResponseMessage =
+	| WorkerSuccessMessage
+	| WorkerErrorMessage
+	| WorkerCancelledMessage;
