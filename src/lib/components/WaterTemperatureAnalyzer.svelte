@@ -67,7 +67,7 @@
 			const operation: CsvParseOperation = parseCsv(file);
 			currentOperation = operation;
 
-			const results = await operation.promise;
+			const results = await operation.results;
 
 			// Update state with results
 			parseResults = results;
@@ -75,7 +75,11 @@
 		} catch (error) {
 			// Don't show error message if it was cancelled by the user
 			if (error instanceof CancellationError) {
-				// Silent cancellation - user initiated
+				// Silent cancellation - user initiated - reset to initial state
+				selectedFile = null;
+				if (fileInput) {
+					fileInput.value = '';
+				}
 			} else {
 				errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
 			}

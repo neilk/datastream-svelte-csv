@@ -22,7 +22,7 @@ export class CancellationError extends Error {
  * Result of parseCsv, containing both the promise and a cancel function
  */
 export interface CsvParseOperation {
-	promise: Promise<ParseResults>;
+	results: Promise<ParseResults>;
 	cancel: () => void;
 }
 
@@ -49,8 +49,10 @@ function deserializeResults(serialized: SerializableParseResults): ParseResults 
 export function parseCsv(file: File): CsvParseOperation {
 	let worker: Worker | null = null;
 	let isCancelled = false;
+	let promiseReject: ((reason?: any) => void) | null = null;
 
 	const promise = new Promise<ParseResults>((resolve, reject) => {
+		promiseReject = reject;
 		// Create worker from the worker module
 		// Vite will handle bundling the worker correctly with ?worker suffix
 		worker = new Worker(new URL('./CsvWebWorker.ts', import.meta.url), {
@@ -68,18 +70,21 @@ export function parseCsv(file: File): CsvParseOperation {
 					worker.terminate();
 					worker = null;
 				}
+				promiseReject = null; // Clear reject function
 				resolve(results);
 			} else if (message.type === 'error') {
 				if (worker) {
 					worker.terminate();
 					worker = null;
 				}
+				promiseReject = null; // Clear reject function
 				reject(new Error(message.error));
 			} else if (message.type === 'cancelled') {
 				if (worker) {
 					worker.terminate();
 					worker = null;
 				}
+				promiseReject = null; // Clear reject function
 				reject(new CancellationError());
 			}
 		};
@@ -90,6 +95,7 @@ export function parseCsv(file: File): CsvParseOperation {
 				worker.terminate();
 				worker = null;
 			}
+			promiseReject = null; // Clear reject function
 			reject(new Error(`Worker error: ${error.message}`));
 		};
 
@@ -102,10 +108,11 @@ export function parseCsv(file: File): CsvParseOperation {
 	});
 
 	const cancel = async () => {
-		console.log('received cancel');
 		if (isCancelled || !worker) {
 			return; // Already cancelled or worker doesn't exist
 		}
+
+		isCancelled = true;
 
 		// Send cancel message to worker (best effort)
 		try {
@@ -115,14 +122,20 @@ export function parseCsv(file: File): CsvParseOperation {
 			worker.postMessage(cancelMessage);
 		} catch (error) {
 			// Worker might already be terminated, ignore
-		} finally {
-			// Terminate the worker immediately
+		}
+
+		// Terminate the worker immediately
+		if (worker) {
 			worker.terminate();
 			worker = null;
 		}
 
-		isCancelled = true;
+		// Reject the promise to unblock the UI
+		if (promiseReject) {
+			promiseReject(new CancellationError());
+			promiseReject = null;
+		}
 	};
 
-	return { promise, cancel };
+	return { results: promise, cancel };
 }
