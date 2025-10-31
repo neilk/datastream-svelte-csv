@@ -529,15 +529,17 @@
 
 	.results-content {
 		display: flex;
-		gap: 2rem;
+		gap: 0;
 		align-items: flex-start;
-	}
-
-	.location-selector {
-		flex: 1;
 		padding: 1rem;
 		background-color: #f5f5f5;
 		border-radius: 8px;
+	}
+
+	.location-selector {
+		flex: 3;
+		padding: 1rem;
+		border-right: 1px solid #ddd;
 	}
 
 	.location-selector > label {
@@ -577,11 +579,8 @@
 	}
 
 	.temperature-display {
-		flex: 1;
+		flex: 2;
 		padding: 1rem;
-		background-color: #f5f5f5;
-		border: 1px solid #ddd;
-		border-radius: 8px;
 		color: #333;
 		text-align: left;
 	}
