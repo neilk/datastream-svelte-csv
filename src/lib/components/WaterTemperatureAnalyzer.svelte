@@ -413,11 +413,9 @@
 	}
 
 	.error-message {
-		margin: 1.5rem 0;
 		padding: 1rem;
 		background-color: #ffebee;
 		border-left: 4px solid #f44336;
-		border-radius: 4px;
 	}
 
 	.error-message p {
@@ -463,13 +461,15 @@
 
 	.results-section {
 		margin: 2rem 0;
+		background-color: #f5f5f5;
+		border-radius: 8px;
+		border: 3px solid #ccc;
+		overflow: hidden;
 	}
 
 	.file-info-header {
-		margin-bottom: 1.5rem;
 		padding: 1rem;
-		background-color: #f5f5f5;
-		border-radius: 8px;
+		border-bottom: 1px solid #ddd;
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
@@ -532,8 +532,6 @@
 		gap: 0;
 		align-items: flex-start;
 		padding: 1rem;
-		background-color: #f5f5f5;
-		border-radius: 8px;
 	}
 
 	.location-selector {
